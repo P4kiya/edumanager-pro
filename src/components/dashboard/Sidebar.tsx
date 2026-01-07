@@ -9,16 +9,16 @@ import {
   BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocation, Link } from "react-router-dom";
 
 interface NavItem {
   icon: React.ElementType;
   label: string;
   href: string;
-  active?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Tableau de bord", href: "/", active: true },
+  { icon: LayoutDashboard, label: "Tableau de bord", href: "/" },
   { icon: GraduationCap, label: "Étudiants", href: "/etudiants" },
   { icon: Users, label: "Professeurs", href: "/professeurs" },
   { icon: Calendar, label: "Emploi du temps", href: "/emploi-du-temps" },
@@ -27,6 +27,8 @@ const navItems: NavItem[] = [
 ];
 
 export function Sidebar() {
+  const location = useLocation();
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
       {/* Logo */}
@@ -40,14 +42,14 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => (
-          <a
+          <Link
             key={item.label}
-            href={item.href}
-            className={cn("nav-link", item.active && "active")}
+            to={item.href}
+            className={cn("nav-link", location.pathname === item.href && "active")}
           >
             <item.icon className="h-5 w-5" />
             <span className="text-sm font-medium">{item.label}</span>
-          </a>
+          </Link>
         ))}
       </nav>
 
