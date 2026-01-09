@@ -7,8 +7,10 @@ import {
   Download,
   TrendingUp,
   TrendingDown,
+  Eye,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { PaymentReceipt } from "@/components/dashboard/PaymentReceipt";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -168,7 +170,15 @@ const kpiData = [
 
 export default function Finances() {
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
+  const handleViewReceipt = (transaction: Transaction) => {
+    if (transaction.status === "paid") {
+      setSelectedTransaction(transaction);
+      setReceiptOpen(true);
+    }
+  };
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat("fr-MA").format(amount);
   };
@@ -326,6 +336,15 @@ export default function Finances() {
                           align="end"
                           className="bg-[#111827] border-border"
                         >
+                          {transaction.status === "paid" && (
+                            <DropdownMenuItem 
+                              className="cursor-pointer hover:bg-white/10"
+                              onClick={() => handleViewReceipt(transaction)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Voir le Reçu
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem className="cursor-pointer hover:bg-white/10">
                             <Download className="mr-2 h-4 w-4" />
                             Télécharger Facture
@@ -338,6 +357,13 @@ export default function Finances() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Payment Receipt Sheet */}
+        <PaymentReceipt
+          transaction={selectedTransaction}
+          open={receiptOpen}
+          onOpenChange={setReceiptOpen}
+        />
       </div>
     </DashboardLayout>
   );
