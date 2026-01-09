@@ -6,7 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Etudiants from "./pages/Etudiants";
+import StudentProfile from "./pages/StudentProfile";
 import EmploiDuTemps from "./pages/EmploiDuTemps";
+import Presences from "./pages/Presences";
+import Notes from "./pages/Notes";
 import Professeurs from "./pages/Professeurs";
 import Finances from "./pages/Finances";
 import Parametres from "./pages/Parametres";
@@ -24,7 +27,10 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/etudiants" element={<Etudiants />} />
+          <Route path="/etudiants/:id" element={<StudentProfile />} />
           <Route path="/emploi-du-temps" element={<EmploiDuTemps />} />
+          <Route path="/presences" element={<Presences />} />
+          <Route path="/notes" element={<Notes />} />
           <Route path="/professeurs" element={<Professeurs />} />
           <Route path="/finances" element={<Finances />} />
           <Route path="/parametres" element={<Parametres />} />
