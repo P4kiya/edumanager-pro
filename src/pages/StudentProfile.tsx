@@ -46,9 +46,13 @@ const studentData = {
   adresse: "45 Rue Hassan II, Casablanca",
   dateNaissance: "2007-03-15",
   parents: {
+    id: "P001",
     pere: { nom: "Mohammed El Amrani", telephone: "06 11 22 33 44" },
     mere: { nom: "Fatima El Amrani", telephone: "06 55 66 77 88" },
   },
+  siblings: [
+    { id: "E4521", prenom: "Sara", classe: "1BAC-B", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face" },
+  ],
 };
 
 const overviewData = {
@@ -184,7 +188,12 @@ export default function StudentProfile() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{studentData.parents.pere.nom}</p>
+                    <button 
+                      onClick={() => navigate(`/parents/${studentData.parents.id}`)}
+                      className="text-sm font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
+                    >
+                      {studentData.parents.pere.nom}
+                    </button>
                     <p className="text-xs text-muted-foreground">Père</p>
                   </div>
                   <Tooltip>
@@ -198,7 +207,12 @@ export default function StudentProfile() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-foreground">{studentData.parents.mere.nom}</p>
+                    <button 
+                      onClick={() => navigate(`/parents/${studentData.parents.id}`)}
+                      className="text-sm font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
+                    >
+                      {studentData.parents.mere.nom}
+                    </button>
                     <p className="text-xs text-muted-foreground">Mère</p>
                   </div>
                   <Tooltip>
@@ -212,6 +226,35 @@ export default function StudentProfile() {
                 </div>
               </div>
             </div>
+
+            {/* Siblings Widget */}
+            {studentData.siblings.length > 0 && (
+              <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5">
+                <h3 className="text-sm font-medium text-muted-foreground mb-4">Frères et Sœurs</h3>
+                <div className="space-y-3">
+                  {studentData.siblings.map((sibling) => (
+                    <button
+                      key={sibling.id}
+                      onClick={() => navigate(`/etudiants/${sibling.id}`)}
+                      className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 transition-colors group"
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={sibling.avatar} />
+                        <AvatarFallback className="bg-primary/20 text-primary text-sm">
+                          {sibling.prenom[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                          {sibling.prenom}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{sibling.classe}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Main Content Area */}

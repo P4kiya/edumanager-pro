@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Etudiants from "./pages/Etudiants";
 import StudentProfile from "./pages/StudentProfile";
+import Parents from "./pages/Parents";
+import ParentProfile from "./pages/ParentProfile";
 import EmploiDuTemps from "./pages/EmploiDuTemps";
 import Presences from "./pages/Presences";
 import Notes from "./pages/Notes";
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/etudiants" element={<Etudiants />} />
           <Route path="/etudiants/:id" element={<StudentProfile />} />
+          <Route path="/parents" element={<Parents />} />
+          <Route path="/parents/:id" element={<ParentProfile />} />
           <Route path="/emploi-du-temps" element={<EmploiDuTemps />} />
           <Route path="/presences" element={<Presences />} />
           <Route path="/notes" element={<Notes />} />
