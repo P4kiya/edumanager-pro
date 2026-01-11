@@ -8,7 +8,8 @@ import {
   LogOut,
   BookOpen,
   ClipboardCheck,
-  FileText
+  FileText,
+  UsersRound
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation, Link, useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Tableau de bord", href: "/" },
   { icon: GraduationCap, label: "Étudiants", href: "/etudiants" },
+  { icon: UsersRound, label: "Parents & Tuteurs", href: "/parents" },
   { icon: Calendar, label: "Emploi du temps", href: "/emploi-du-temps" },
   { icon: ClipboardCheck, label: "Présences", href: "/presences" },
   { icon: FileText, label: "Notes & Bulletins", href: "/notes" },
