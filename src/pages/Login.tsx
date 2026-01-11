@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, Loader2, GraduationCap } from "lucide-react";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const Login = () => {
     // Simulate authentication delay
     setTimeout(() => {
       setIsLoading(false);
+      toast.success("Ravi de vous revoir, Admin.");
       navigate("/");
     }, 1500);
   };
