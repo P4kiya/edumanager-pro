@@ -6,10 +6,12 @@ import {
   Wallet, 
   Settings, 
   LogOut,
-  BookOpen
+  BookOpen,
+  ClipboardCheck,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 
 interface NavItem {
   icon: React.ElementType;
@@ -20,14 +22,21 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Tableau de bord", href: "/" },
   { icon: GraduationCap, label: "Étudiants", href: "/etudiants" },
-  { icon: Users, label: "Professeurs", href: "/professeurs" },
   { icon: Calendar, label: "Emploi du temps", href: "/emploi-du-temps" },
+  { icon: ClipboardCheck, label: "Présences", href: "/presences" },
+  { icon: FileText, label: "Notes & Bulletins", href: "/notes" },
+  { icon: Users, label: "Professeurs", href: "/professeurs" },
   { icon: Wallet, label: "Finances", href: "/finances" },
   { icon: Settings, label: "Paramètres", href: "/parametres" },
 ];
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate("/login");
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
@@ -55,7 +64,10 @@ export function Sidebar() {
 
       {/* Logout */}
       <div className="px-4 py-4 border-t border-sidebar-border">
-        <button className="nav-link w-full text-muted-foreground hover:text-destructive">
+        <button 
+          onClick={handleLogout}
+          className="nav-link w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+        >
           <LogOut className="h-5 w-5" />
           <span className="text-sm font-medium">Déconnexion</span>
         </button>
