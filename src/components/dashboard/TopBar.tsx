@@ -130,7 +130,7 @@ export function TopBar() {
             <PopoverContent
               align="end"
               sideOffset={8}
-              className="w-[350px] border-border bg-[#111827] p-0 shadow-xl shadow-black/40 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+              className="w-[350px] border-border bg-popover p-0 shadow-xl shadow-black/20 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
