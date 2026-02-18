@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Bell, CheckCircle, AlertTriangle, Info, CircleDot } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Bell, CheckCircle, AlertTriangle, Info, CircleDot, Sun, Moon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Popover,
@@ -60,8 +60,28 @@ const iconColorMap = {
 
 export function TopBar() {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") ? "dark" : "light";
+    }
+    return "dark";
+  });
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    localStorage.setItem("theme", newTheme);
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    const initial = saved || "dark";
+    setTheme(initial);
+    document.documentElement.classList.toggle("dark", initial === "dark");
+  }, []);
 
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -82,7 +102,20 @@ export function TopBar() {
 
         {/* Right side */}
         <div className="flex items-center gap-4">
-          {/* Notifications */}
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary/50 transition-colors hover:bg-secondary"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <Moon className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
+
+
           <Popover>
             <PopoverTrigger asChild>
               <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary/50 transition-colors hover:bg-secondary">
