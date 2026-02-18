@@ -25,8 +25,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Plus, MoreHorizontal, Pencil, Trash2, Filter, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Pencil, Trash2, Filter, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
 const initialStudents: Student[] = [
@@ -217,6 +218,7 @@ const statuts = ["Tous", "actif", "inactif"];
 const itemsPerPageOptions = [5, 10, 20, 50];
 
 const Etudiants = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClasse, setSelectedClasse] = useState("Toutes");
@@ -433,7 +435,12 @@ const Etudiants = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-foreground">{student.prenom} {student.nom}</p>
+                      <button 
+                        onClick={() => navigate(`/etudiants/${student.id}`)}
+                        className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
+                      >
+                        {student.prenom} {student.nom}
+                      </button>
                       <p className="text-xs text-muted-foreground sm:hidden">{student.email}</p>
                     </div>
                   </div>
