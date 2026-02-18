@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   Phone,
@@ -29,8 +30,22 @@ import {
   CheckCircle2,
   XCircle,
   FileText,
+  Receipt,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from "recharts";
 
 // Dummy student data
 const studentData = {
@@ -72,16 +87,27 @@ const grades = [
 ];
 
 const bulletins = [
-  { trimestre: "Trimestre 1", annee: "2024-2025", moyenne: 14.2, rang: "5/32", mention: "Bien" },
-  { trimestre: "Trimestre 2", annee: "2023-2024", moyenne: 15.1, rang: "3/30", mention: "Bien" },
-  { trimestre: "Trimestre 3", annee: "2023-2024", moyenne: 14.8, rang: "4/30", mention: "Bien" },
+  { trimestre: "T1 2023", annee: "2023-2024", moyenne: 13.5, rang: "8/30", mention: "Assez Bien" },
+  { trimestre: "T2 2023", annee: "2023-2024", moyenne: 14.2, rang: "6/30", mention: "Bien" },
+  { trimestre: "T3 2023", annee: "2023-2024", moyenne: 15.1, rang: "3/30", mention: "Bien" },
+  { trimestre: "T1 2024", annee: "2024-2025", moyenne: 14.8, rang: "5/32", mention: "Bien" },
+  { trimestre: "T2 2024", annee: "2024-2025", moyenne: 15.6, rang: "3/32", mention: "Bien" },
+];
+
+const progressionData = [
+  { period: "T1 2023", moyenne: 13.5 },
+  { period: "T2 2023", moyenne: 14.2 },
+  { period: "T3 2023", moyenne: 15.1 },
+  { period: "T1 2024", moyenne: 14.8 },
+  { period: "T2 2024", moyenne: 15.6 },
 ];
 
 const payments = [
-  { id: 1, date: "15/01/2025", motif: "Frais de scolarité T2", montant: 15000, statut: "paid" },
-  { id: 2, date: "15/10/2024", motif: "Frais de scolarité T1", montant: 15000, statut: "paid" },
-  { id: 3, date: "01/09/2024", motif: "Frais d'inscription", montant: 5000, statut: "paid" },
-  { id: 4, date: "15/04/2025", motif: "Frais de scolarité T3", montant: 15000, statut: "pending" },
+  { id: 1, date: "15/01/2025", motif: "Frais de scolarité T2", montant: 15000, statut: "paid", methode: "Virement" },
+  { id: 2, date: "15/10/2024", motif: "Frais de scolarité T1", montant: 15000, statut: "paid", methode: "Espèces" },
+  { id: 3, date: "01/09/2024", motif: "Frais d'inscription", montant: 5000, statut: "paid", methode: "Chèque" },
+  { id: 4, date: "15/04/2025", motif: "Frais de scolarité T3", montant: 15000, statut: "pending", methode: "-" },
+  { id: 5, date: "15/06/2025", motif: "Frais d'examen", montant: 2000, statut: "pending", methode: "-" },
 ];
 
 // Generate attendance heatmap data (last 6 months)
@@ -276,7 +302,7 @@ export default function StudentProfile() {
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-4">
+              <TabsContent value="overview" className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-5">
                     <div className="flex items-center gap-3 mb-3">
@@ -285,9 +311,14 @@ export default function StudentProfile() {
                       </div>
                       <span className="text-sm text-muted-foreground">Moyenne Générale</span>
                     </div>
-                    <p className="text-3xl font-bold text-emerald-400 font-mono">
-                      {overviewData.moyenne}<span className="text-lg text-muted-foreground">/20</span>
-                    </p>
+                    <div className="flex items-end gap-2">
+                      <p className="text-3xl font-bold text-emerald-400 font-mono">
+                        {overviewData.moyenne}<span className="text-lg text-muted-foreground">/20</span>
+                      </p>
+                      <span className="flex items-center text-xs text-emerald-400 mb-1">
+                        <ArrowUpRight className="h-3 w-3" />+0.8
+                      </span>
+                    </div>
                   </div>
 
                   <div className="rounded-xl border border-primary/20 bg-primary/10 p-5">
@@ -311,6 +342,31 @@ export default function StudentProfile() {
                     </div>
                     <p className="text-lg font-semibold text-foreground">{overviewData.prochainPaiement}</p>
                     <p className="text-sm text-muted-foreground font-mono">{formatAmount(overviewData.montantDu)} MAD</p>
+                  </div>
+                </div>
+
+                {/* Progression Chart */}
+                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6">
+                  <h3 className="font-semibold text-foreground mb-6">Progression Académique</h3>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={progressionData}>
+                        <defs>
+                          <linearGradient id="colorMoyenne" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 30%, 18%)" />
+                        <XAxis dataKey="period" tick={{ fill: "hsl(215, 20%, 55%)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis domain={[8, 20]} tick={{ fill: "hsl(215, 20%, 55%)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <RechartsTooltip
+                          contentStyle={{ backgroundColor: "hsl(222, 41%, 9%)", border: "1px solid hsl(222, 30%, 18%)", borderRadius: "8px", color: "hsl(210, 40%, 98%)" }}
+                          formatter={(value: number) => [`${value}/20`, "Moyenne"]}
+                        />
+                        <Area type="monotone" dataKey="moyenne" stroke="hsl(217, 91%, 60%)" strokeWidth={2.5} fill="url(#colorMoyenne)" dot={{ fill: "hsl(217, 91%, 60%)", strokeWidth: 2, r: 5 }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </TabsContent>
@@ -470,7 +526,57 @@ export default function StudentProfile() {
               </TabsContent>
 
               {/* Financial Tab */}
-              <TabsContent value="financial" className="space-y-4">
+              <TabsContent value="financial" className="space-y-6">
+                {/* Financial Summary */}
+                {(() => {
+                  const totalDue = payments.reduce((s, p) => s + p.montant, 0);
+                  const totalPaid = payments.filter(p => p.statut === "paid").reduce((s, p) => s + p.montant, 0);
+                  const totalPending = totalDue - totalPaid;
+                  const paidPercent = Math.round((totalPaid / totalDue) * 100);
+                  return (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="rounded-xl border border-border bg-card/50 p-5">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Receipt className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Total Annuel</span>
+                        </div>
+                        <p className="text-2xl font-bold text-foreground font-mono">{formatAmount(totalDue)} MAD</p>
+                      </div>
+                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-5">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                          <span className="text-sm text-muted-foreground">Total Payé</span>
+                        </div>
+                        <p className="text-2xl font-bold text-emerald-400 font-mono">{formatAmount(totalPaid)} MAD</p>
+                      </div>
+                      <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock className="h-5 w-5 text-amber-400" />
+                          <span className="text-sm text-muted-foreground">Restant</span>
+                        </div>
+                        <p className="text-2xl font-bold text-amber-400 font-mono">{formatAmount(totalPending)} MAD</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Payment Progress */}
+                {(() => {
+                  const totalDue = payments.reduce((s, p) => s + p.montant, 0);
+                  const totalPaid = payments.filter(p => p.statut === "paid").reduce((s, p) => s + p.montant, 0);
+                  const paidPercent = Math.round((totalPaid / totalDue) * 100);
+                  return (
+                    <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-foreground">Progression des paiements</span>
+                        <span className="text-sm font-mono text-primary">{paidPercent}%</span>
+                      </div>
+                      <Progress value={paidPercent} className="h-2" />
+                    </div>
+                  );
+                })()}
+
+                {/* Payment History Table */}
                 <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
                   <div className="p-4 border-b border-border">
                     <h3 className="font-semibold text-foreground">Historique des Paiements</h3>
@@ -480,15 +586,17 @@ export default function StudentProfile() {
                       <TableRow className="border-border/50 hover:bg-transparent">
                         <TableHead className="text-muted-foreground">Date</TableHead>
                         <TableHead className="text-muted-foreground">Motif</TableHead>
+                        <TableHead className="text-muted-foreground">Méthode</TableHead>
                         <TableHead className="text-muted-foreground text-right">Montant</TableHead>
                         <TableHead className="text-muted-foreground">Statut</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {payments.map((payment) => (
-                        <TableRow key={payment.id} className="border-border/50 hover:bg-white/5">
+                        <TableRow key={payment.id} className="border-border/50 hover:bg-secondary/30">
                           <TableCell className="text-muted-foreground">{payment.date}</TableCell>
                           <TableCell className="font-medium text-foreground">{payment.motif}</TableCell>
+                          <TableCell className="text-muted-foreground">{payment.methode}</TableCell>
                           <TableCell className="text-right font-mono font-medium text-foreground">
                             {formatAmount(payment.montant)} MAD
                           </TableCell>
