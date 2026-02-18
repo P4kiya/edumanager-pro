@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Users,
@@ -44,6 +44,16 @@ export default function Parametres() {
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [paymentReminders, setPaymentReminders] = useState(true);
   const [absenceAlerts, setAbsenceAlerts] = useState(true);
+
+  // System info
+  const [version, setVersion] = useState("Unknown");
+
+  useEffect(() => {
+    if (window.require) {
+      const { ipcRenderer } = window.require("electron");
+      ipcRenderer.invoke("get-version").then(setVersion);
+    }
+  }, []);
 
   return (
     <DashboardLayout>
@@ -157,6 +167,22 @@ export default function Parametres() {
                       className="bg-secondary/50 border-border focus:border-primary resize-none"
                       rows={3}
                     />
+                  </div>
+
+                  {/* Version Section */}
+                  <div className="pt-6 border-t border-border">
+                    <h3 className="text-sm font-medium text-foreground mb-2">Informations système</h3>
+                    <div className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4">
+                      <div>
+                        <p className="font-medium text-foreground">Version de l'application</p>
+                        <p className="text-sm text-muted-foreground">
+                          Version installée actuellement
+                        </p>
+                      </div>
+                      <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-mono">
+                        v{version}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

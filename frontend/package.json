@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "main.cjs",
   "scripts": {
@@ -97,6 +97,13 @@
     "directories": {
       "output": "dist_electron"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "P4kiya",
+        "repo": "edumanager-pro"
+      }
+    ],
     "files": [
       "dist/**/*",
       "main.cjs",

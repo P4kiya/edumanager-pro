@@ -6,6 +6,8 @@ const log = require("electron-log");
 // Configure logging
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = "info";
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -25,13 +27,15 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "dist", "index.html"));
   }
+
+  // Trigger update check on window creation
+  autoUpdater.checkForUpdates();
 }
 
 app.whenReady().then(() => {
   createWindow();
 
-  // Check for updates
-  autoUpdater.checkForUpdatesAndNotify();
+
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -55,13 +59,41 @@ autoUpdater.on("update-downloaded", () => {
   });
 });
 
+autoUpdater.on("download-progress", (progressObj) => {
+  log.info("Progress object:", JSON.stringify(progressObj));
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + " - Downloaded " + progressObj.percent + "%";
+  log_message = log_message + " (" + progressObj.transferred + "/" + progressObj.total + ")";
+  log.info(log_message);
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send("download-progress", progressObj);
+  });
+});
+
+autoUpdater.on("error", (err) => {
+  log.error("Update error: " + err);
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send("update-error", err.message || err.toString());
+  });
+});
+
 // IPC handlers
+ipcMain.on("download-update", () => {
+  autoUpdater.downloadUpdate();
+});
+
 ipcMain.on("restart-app", () => {
   autoUpdater.quitAndInstall();
 });
 
-ipcMain.on("check-updates", () => {
-  autoUpdater.checkForUpdatesAndNotify();
+// Duplicates removed
+
+// ipcMain.on("check-updates"...) is now handled inside createWindow logic or above
+// Keeping other handlers
+
+
+ipcMain.handle("get-version", () => {
+  return app.getVersion();
 });
 
 app.on("window-all-closed", () => {
