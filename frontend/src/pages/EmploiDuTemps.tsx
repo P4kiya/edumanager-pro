@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -327,80 +328,76 @@ export default function EmploiDuTemps() {
                       className="relative min-h-[60px] border-r border-b border-border/30 last:border-r-0 p-1"
                     >
                       {eventToRender && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`absolute inset-1 z-10 rounded-lg border-l-4 ${
-                                colorStyles[eventToRender.color].bg
-                              } ${colorStyles[eventToRender.color].border} ${
-                                colorStyles[eventToRender.color].hover
-                              } cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20 p-2.5 flex flex-col justify-center`}
-                              style={{
-                                height: `calc(${
-                                  (eventToRender.endHour -
-                                    eventToRender.startHour) *
-                                  100
-                                }% + ${
-                                  (eventToRender.endHour -
-                                    eventToRender.startHour -
-                                    1) *
-                                  0.5
-                                }rem - 0.5rem)`,
-                              }}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`absolute inset-1 z-10 rounded-lg border-l-4 ${colorStyles[eventToRender.color].bg
+                                  } ${colorStyles[eventToRender.color].border} ${colorStyles[eventToRender.color].hover
+                                  } cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20 p-2.5 flex flex-col justify-center`}
+                                style={{
+                                  height: `calc(${(eventToRender.endHour -
+                                      eventToRender.startHour) *
+                                    100
+                                    }% + ${(eventToRender.endHour -
+                                      eventToRender.startHour -
+                                      1) *
+                                    0.5
+                                    }rem - 0.5rem)`,
+                                }}
+                              >
+                                <p
+                                  className={`text-sm font-semibold ${colorStyles[eventToRender.color].text
+                                    } truncate`}
+                                >
+                                  {eventToRender.subject}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1 truncate">
+                                  {eventToRender.room}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {eventToRender.teacher}
+                                </p>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="bg-[#1a1f2e] border-border p-3 max-w-[250px]"
                             >
-                              <p
-                                className={`text-sm font-semibold ${
-                                  colorStyles[eventToRender.color].text
-                                } truncate`}
-                              >
-                                {eventToRender.subject}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1 truncate">
-                                {eventToRender.room}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {eventToRender.teacher}
-                              </p>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="right"
-                            className="bg-[#1a1f2e] border-border p-3 max-w-[250px]"
-                          >
-                            <div className="space-y-2">
-                              <p
-                                className={`font-semibold ${
-                                  colorStyles[eventToRender.color].text
-                                }`}
-                              >
-                                {eventToRender.subject}
-                              </p>
-                              <div className="space-y-1.5 text-xs">
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    {eventToRender.startHour
-                                      .toString()
-                                      .padStart(2, "0")}
-                                    :00 -{" "}
-                                    {eventToRender.endHour
-                                      .toString()
-                                      .padStart(2, "0")}
-                                    :00
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <MapPin className="h-3 w-3" />
-                                  <span>{eventToRender.room}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <User className="h-3 w-3" />
-                                  <span>{eventToRender.teacher}</span>
+                              <div className="space-y-2">
+                                <p
+                                  className={`font-semibold ${colorStyles[eventToRender.color].text
+                                    }`}
+                                >
+                                  {eventToRender.subject}
+                                </p>
+                                <div className="space-y-1.5 text-xs">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>
+                                      {eventToRender.startHour
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :00 -{" "}
+                                      {eventToRender.endHour
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :00
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>{eventToRender.room}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <User className="h-3 w-3" />
+                                    <span>{eventToRender.teacher}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                   );

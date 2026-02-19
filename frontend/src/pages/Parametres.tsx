@@ -371,7 +371,7 @@ export default function Parametres() {
               )}
 
               {/* Sticky Save Button */}
-              <div className="sticky bottom-0 border-t border-border/50 bg-[#0a0f1c]/95 backdrop-blur-sm p-4">
+              <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur-sm p-4">
                 <div className="flex justify-end">
                   <Button className="bg-primary hover:bg-primary/90">
                     <Save className="mr-2 h-4 w-4" />
