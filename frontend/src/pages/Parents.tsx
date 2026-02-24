@@ -15,6 +15,7 @@ import {
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Search, Phone, Mail, Users, ChevronRight } from "lucide-react";
@@ -110,143 +111,145 @@ export default function Parents() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Parents & Tuteurs</h1>
-            <p className="text-muted-foreground mt-1">
-              Gérez les contacts parentaux et la logique familiale
+      <TooltipProvider>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Parents & Tuteurs</h1>
+              <p className="text-muted-foreground mt-1">
+                Gérez les contacts parentaux et la logique familiale
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button className="gap-2">
+                <Users className="h-4 w-4" />
+                Ajouter un Parent
+              </Button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher par nom de parent ou d'enfant..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-card/50 border-border"
+            />
+          </div>
+
+          {/* Results info when searching */}
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground">
+              {filteredParents.length} résultat(s) pour "{searchQuery}"
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button className="gap-2">
-              <Users className="h-4 w-4" />
-              Ajouter un Parent
-            </Button>
-          </div>
-        </div>
+          )}
 
-        {/* Search */}
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher par nom de parent ou d'enfant..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-card/50 border-border"
-          />
-        </div>
-
-        {/* Results info when searching */}
-        {searchQuery && (
-          <p className="text-sm text-muted-foreground">
-            {filteredParents.length} résultat(s) pour "{searchQuery}"
-          </p>
-        )}
-
-        {/* Parents Table */}
-        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border/50 hover:bg-transparent">
-                <TableHead className="text-muted-foreground">Nom du Parent</TableHead>
-                <TableHead className="text-muted-foreground">Enfants</TableHead>
-                <TableHead className="text-muted-foreground">Contact</TableHead>
-                <TableHead className="text-muted-foreground text-right">État Financier</TableHead>
-                <TableHead className="text-muted-foreground w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredParents.map((parent) => (
-                <TableRow
-                  key={parent.id}
-                  className="border-border/50 hover:bg-white/5 cursor-pointer"
-                  onClick={() => navigate(`/parents/${parent.id}`)}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={parent.avatar} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
-                          {parent.prenom[0]}{parent.nom[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {parent.prenom} {parent.nom}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          ID: #{parent.id}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {/* Facepile of children */}
-                    <div className="flex items-center">
-                      <div className="flex -space-x-2">
-                        {parent.enfants.map((enfant) => (
-                          <Tooltip key={enfant.id}>
-                            <TooltipTrigger asChild>
-                              <Avatar className="h-8 w-8 border-2 border-background hover:z-10 transition-transform hover:scale-110">
-                                <AvatarImage src={enfant.avatar} />
-                                <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                                  {enfant.prenom[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{enfant.prenom} - {enfant.classe}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ))}
-                      </div>
-                      <span className="ml-3 text-sm text-muted-foreground">
-                        {parent.enfants.length} enfant{parent.enfants.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{parent.telephone}</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{parent.email}</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {parent.soldeDu > 0 ? (
-                      <span className="font-mono text-amber-400">
-                        {formatAmount(parent.soldeDu)} MAD
-                      </span>
-                    ) : (
-                      <span className="font-mono text-emerald-400">
-                        À jour
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </TableCell>
+          {/* Parents Table */}
+          <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/50 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground">Nom du Parent</TableHead>
+                  <TableHead className="text-muted-foreground">Enfants</TableHead>
+                  <TableHead className="text-muted-foreground">Contact</TableHead>
+                  <TableHead className="text-muted-foreground text-right">État Financier</TableHead>
+                  <TableHead className="text-muted-foreground w-12"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredParents.map((parent) => (
+                  <TableRow
+                    key={parent.id}
+                    className="border-border/50 hover:bg-white/5 cursor-pointer"
+                    onClick={() => navigate(`/parents/${parent.id}`)}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={parent.avatar} />
+                          <AvatarFallback className="bg-primary/20 text-primary">
+                            {parent.prenom[0]}{parent.nom[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {parent.prenom} {parent.nom}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: #{parent.id}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {/* Facepile of children */}
+                      <div className="flex items-center">
+                        <div className="flex -space-x-2">
+                          {parent.enfants.map((enfant) => (
+                            <Tooltip key={enfant.id}>
+                              <TooltipTrigger asChild>
+                                <Avatar className="h-8 w-8 border-2 border-background hover:z-10 transition-transform hover:scale-110">
+                                  <AvatarImage src={enfant.avatar} />
+                                  <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                    {enfant.prenom[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{enfant.prenom} - {enfant.classe}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
+                        </div>
+                        <span className="ml-3 text-sm text-muted-foreground">
+                          {parent.enfants.length} enfant{parent.enfants.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                              <Phone className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{parent.telephone}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{parent.email}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {parent.soldeDu > 0 ? (
+                        <span className="font-mono text-amber-400">
+                          {formatAmount(parent.soldeDu)} MAD
+                        </span>
+                      ) : (
+                        <span className="font-mono text-emerald-400">
+                          À jour
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
     </DashboardLayout>
   );
 }

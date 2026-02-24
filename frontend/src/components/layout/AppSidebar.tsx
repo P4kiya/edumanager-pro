@@ -11,7 +11,7 @@ import {
   FileText,
   UsersRound
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -28,6 +28,11 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate("/login");
+  };
 
   return (
     <aside className="w-64 min-h-screen bg-[#0A0F1C] border-r border-white/5 flex flex-col fixed left-0 top-0 bottom-0 z-40">
@@ -68,7 +73,10 @@ export function AppSidebar() {
 
       {/* Logout Section */}
       <div className="p-4 border-t border-white/5">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 group">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 group"
+        >
           <LogOut className="h-5 w-5 group-hover:text-red-400" />
           Déconnexion
         </button>
