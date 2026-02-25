@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface Student {
   id: string;
@@ -34,7 +35,7 @@ interface StudentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   student?: Student | null;
-  onSave: (student: Omit<Student, "id" | "avatar"> & { id?: string }) => void;
+  onSave: (student: Omit<Student, "id"> & { id?: string }) => void;
 }
 
 const classes = ["6ème A", "6ème B", "5ème A", "5ème B", "4ème A", "4ème B", "3ème A", "3ème B", "3ème C"];
@@ -49,6 +50,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
     dateNaissance: "",
     adresse: "",
     statut: "actif" as "actif" | "inactif",
+    avatar: "",
   });
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
         dateNaissance: student.dateNaissance,
         adresse: student.adresse,
         statut: student.statut,
+        avatar: student.avatar || "",
       });
     } else {
       setFormData({
@@ -73,9 +76,21 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
         dateNaissance: "",
         adresse: "",
         statut: "actif",
+        avatar: "",
       });
     }
   }, [student, open]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, avatar: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +103,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-card border-border">
+      <DialogContent className="sm:max-w-[580px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {student ? "Modifier l'étudiant" : "Ajouter un étudiant"}
@@ -100,42 +115,70 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="prenom" className="text-foreground">Prénom</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {/* Avatar + Prénom/Nom row */}
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={formData.avatar} />
+                <AvatarFallback className="bg-primary/20 text-primary text-xl">
+                  {formData.prenom?.[0] || ""}{formData.nom?.[0] || ""}
+                </AvatarFallback>
+              </Avatar>
               <Input
-                id="prenom"
-                value={formData.prenom}
-                onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                className="bg-secondary/50 border-border text-foreground"
-                required
+                id="avatar"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
               />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs px-3"
+                onClick={() => document.getElementById('avatar')?.click()}
+              >
+                Choisir une image
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="nom" className="text-foreground">Nom</Label>
-              <Input
-                id="nom"
-                value={formData.nom}
-                onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                className="bg-secondary/50 border-border text-foreground"
-                required
-              />
+
+            <div className="flex-1 grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="prenom" className="text-foreground">Prénom</Label>
+                <Input
+                  id="prenom"
+                  value={formData.prenom}
+                  onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                  className="bg-secondary/50 border-border text-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nom" className="text-foreground">Nom</Label>
+                <Input
+                  id="nom"
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  className="bg-secondary/50 border-border text-foreground"
+                  required
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="email" className="text-foreground">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="bg-secondary/50 border-border text-foreground"
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="bg-secondary/50 border-border text-foreground"
-              required
-            />
-          </div>
-
+          {/* Remaining fields in 2-column grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="telephone" className="text-foreground">Téléphone</Label>
@@ -157,11 +200,8 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
                 required
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="classe" className="text-foreground">Classe</Label>
+              <Label htmlFor="classe" className="text-foreground">Niveau</Label>
               <Select
                 value={formData.classe}
                 onValueChange={(value) => setFormData({ ...formData, classe: value })}
@@ -179,33 +219,17 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="statut" className="text-foreground">Statut</Label>
-              <Select
-                value={formData.statut}
-                onValueChange={(value: "actif" | "inactif") => setFormData({ ...formData, statut: value })}
-              >
-                <SelectTrigger className="bg-secondary/50 border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="actif" className="text-foreground">Actif</SelectItem>
-                  <SelectItem value="inactif" className="text-foreground">Inactif</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="adresse" className="text-foreground">Adresse</Label>
+              <Input
+                id="adresse"
+                value={formData.adresse}
+                onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                className="bg-secondary/50 border-border text-foreground"
+              />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="adresse" className="text-foreground">Adresse</Label>
-            <Input
-              id="adresse"
-              value={formData.adresse}
-              onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-              className="bg-secondary/50 border-border text-foreground"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
               variant="outline"

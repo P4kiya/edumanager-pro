@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +34,9 @@ import {
   Receipt,
   ArrowUpRight,
   ArrowDownRight,
+  Mail,
+  MapPin,
+  CalendarDays
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -47,30 +50,10 @@ import {
   Area,
   AreaChart,
 } from "recharts";
+import { ObjectifBaseStudentsData as studentsData } from "@/data/mockStudents";
+import type { Student } from "@/components/dashboard/StudentForm";
 
-// Dummy student data
-const studentData = {
-  id: "E4509",
-  prenom: "Youssef",
-  nom: "El Amrani",
-  classe: "2BAC-A",
-  age: 17,
-  statut: "actif",
-  avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=128&h=128&fit=crop&crop=face",
-  email: "youssef.elamrani@email.com",
-  telephone: "06 12 34 56 78",
-  adresse: "45 Rue Hassan II, Casablanca",
-  dateNaissance: "2007-03-15",
-  parents: {
-    id: "P001",
-    pere: { nom: "Mohammed El Amrani", telephone: "06 11 22 33 44" },
-    mere: { nom: "Fatima El Amrani", telephone: "06 55 66 77 88" },
-  },
-  siblings: [
-    { id: "E4521", prenom: "Sara", classe: "1BAC-B", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face" },
-  ],
-};
-
+// Mock related data
 const overviewData = {
   moyenne: 14.8,
   assiduite: 94,
@@ -140,6 +123,26 @@ export default function StudentProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
+  const [student, setStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    // Find the actual student from the data source
+    const foundStudent = studentsData.find(s => s.id === id);
+    if (foundStudent) {
+      setStudent(foundStudent);
+    }
+  }, [id]);
+
+  if (!student) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">Étudiant introuvable</h2>
+          <Button onClick={() => navigate("/etudiants")}>Retour à la liste</Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat("fr-MA").format(amount);
@@ -172,16 +175,16 @@ export default function StudentProfile() {
               <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-6">
                 <div className="flex flex-col items-center text-center">
                   <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage src={studentData.avatar} />
+                    <AvatarImage src={student.avatar} />
                     <AvatarFallback className="bg-primary/20 text-primary text-2xl">
-                      {studentData.prenom[0]}{studentData.nom[0]}
+                      {student.prenom[0]}{student.nom[0]}
                     </AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-bold text-foreground">
-                    {studentData.prenom} {studentData.nom}
+                    {student.prenom} {student.nom}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    ID: #{studentData.id}
+                    ID: #{student.id}
                   </p>
                 </div>
               </div>
@@ -193,34 +196,62 @@ export default function StudentProfile() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Classe</span>
                     <Badge className="bg-primary/15 text-primary border-primary/25">
-                      {studentData.classe}
+                      {student.classe}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Âge</span>
-                    <span className="text-sm font-medium text-foreground">{studentData.age} ans</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {student.dateNaissance
+                        ? new Date().getFullYear() - new Date(student.dateNaissance).getFullYear()
+                        : 15} ans
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Statut</span>
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="text-sm text-emerald-400 capitalize">{studentData.statut}</span>
+                      <span className="text-sm text-emerald-400 capitalize">Actif</span>
                     </div>
                   </div>
+                  {student.email && (
+                    <div className="flex items-center gap-3 pt-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{student.email}</span>
+                    </div>
+                  )}
+                  {student.telephone && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{student.telephone}</span>
+                    </div>
+                  )}
+                  {student.adresse && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{student.adresse}</span>
+                    </div>
+                  )}
+                  {student.dateNaissance && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{new Date(student.dateNaissance).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Parents Widget */}
+              {/* Parents Widget (Mocked for now) */}
               <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5">
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">Contacts Parents</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <button
-                        onClick={() => navigate(`/parents/${studentData.parents.id}`)}
+                        onClick={() => navigate(`/parents/P001`)}
                         className="text-sm font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
                       >
-                        {studentData.parents.pere.nom}
+                        Mohammed {student.nom}
                       </button>
                       <p className="text-xs text-muted-foreground">Père</p>
                     </div>
@@ -230,16 +261,16 @@ export default function StudentProfile() {
                           <Phone className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{studentData.parents.pere.telephone}</TooltipContent>
+                      <TooltipContent>06 11 22 33 44</TooltipContent>
                     </Tooltip>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <button
-                        onClick={() => navigate(`/parents/${studentData.parents.id}`)}
+                        onClick={() => navigate(`/parents/P001`)}
                         className="text-sm font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-left"
                       >
-                        {studentData.parents.mere.nom}
+                        Fatima {student.nom}
                       </button>
                       <p className="text-xs text-muted-foreground">Mère</p>
                     </div>
@@ -249,40 +280,13 @@ export default function StudentProfile() {
                           <Phone className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>{studentData.parents.mere.telephone}</TooltipContent>
+                      <TooltipContent>06 55 66 77 88</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
               </div>
 
-              {/* Siblings Widget */}
-              {studentData.siblings.length > 0 && (
-                <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-4">Frères et Sœurs</h3>
-                  <div className="space-y-3">
-                    {studentData.siblings.map((sibling) => (
-                      <button
-                        key={sibling.id}
-                        onClick={() => navigate(`/etudiants/${sibling.id}`)}
-                        className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 transition-colors group"
-                      >
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={sibling.avatar} />
-                          <AvatarFallback className="bg-primary/20 text-primary text-sm">
-                            {sibling.prenom[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left">
-                          <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                            {sibling.prenom}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{sibling.classe}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Siblings Widget - Removed as mock data isn't supported by Student interface yet */}
             </div>
 
             {/* Main Content Area */}

@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter, BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { UpdateBanner } from "@/components/UpdateBanner";
 
@@ -12,6 +12,12 @@ import EmploiDuTemps from "@/pages/EmploiDuTemps";
 import Presences from "@/pages/Presences";
 import Notes from "@/pages/Notes";
 import Login from "@/pages/Login";
+import StudentProfile from "@/pages/StudentProfile";
+import ParentProfile from "@/pages/ParentProfile";
+
+// Check if the app is running in an Electron environment
+const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+const Router = isElectron ? HashRouter : BrowserRouter;
 
 function AppContent() {
   const location = useLocation();
@@ -30,7 +36,9 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Index />} />
           <Route path="/etudiants" element={<Etudiants />} />
+          <Route path="/etudiants/:id" element={<StudentProfile />} />
           <Route path="/parents" element={<Parents />} />
+          <Route path="/parents/:id" element={<ParentProfile />} />
           <Route path="/emploi-du-temps" element={<EmploiDuTemps />} />
           <Route path="/presences" element={<Presences />} />
           <Route path="/notes" element={<Notes />} />
