@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, Loader2, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { authService } from "@/services";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,13 +17,22 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate authentication delay
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Ravi de vous revoir, Admin.");
+
+    try {
+      const user = await authService.login({
+        email: email.trim(),
+        password,
+      });
+
+      authService.saveUser(user);
+      toast.success(`Ravi de vous revoir, ${user.name}.`);
       navigate("/");
-    }, 1500);
+    } catch (error: any) {
+      const backendMessage = error?.response?.data?.message;
+      toast.error(backendMessage || "Email ou mot de passe invalide");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

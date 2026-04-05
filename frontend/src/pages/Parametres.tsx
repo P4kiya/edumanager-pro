@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { agentService, schoolSettingsService } from "@/services";
+import type { AgentRequest, AgentStatus, SchoolSettingsRequest } from "@/types/api.types";
 import { cn } from "@/lib/utils";
 
 type TabId = "general" | "personnel" | "notifications" | "payments";
@@ -42,9 +45,13 @@ export default function Parametres() {
   const [adminEmail, setAdminEmail] = useState("admin@lyceemv.ma");
   const [adminPhone, setAdminPhone] = useState("+212 6 00 00 00 00");
   const adminRole = "Administrateur";
+  const [adminId, setAdminId] = useState<number | null>(null);
+  const [adminPermissions, setAdminPermissions] = useState<string[]>([]);
+  const [adminStatus, setAdminStatus] = useState<AgentStatus>("ACTIVE");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Notification settings state
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -61,6 +68,123 @@ export default function Parametres() {
       ipcRenderer.invoke("get-version").then(setVersion);
     }
   }, []);
+
+  useEffect(() => {
+    const loadSchoolSettings = async () => {
+      try {
+        const settings = await schoolSettingsService.get();
+        setSchoolName(settings.schoolName);
+        setEmail(settings.email);
+        setPhone(settings.phone);
+        setAddress(settings.address);
+      } catch (error) {
+        toast.error("Impossible de charger les paramètres généraux");
+      }
+    };
+
+    loadSchoolSettings();
+  }, []);
+
+  useEffect(() => {
+    const loadAdmin = async () => {
+      try {
+        const agents = await agentService.getAll();
+        if (!agents.length) {
+          return;
+        }
+
+        const selectedAdmin = agents.find((agent) => agent.status === "ACTIVE") ?? agents[0];
+        setAdminId(selectedAdmin.id);
+        setAdminName(selectedAdmin.name);
+        setAdminEmail(selectedAdmin.email);
+        setAdminPhone(selectedAdmin.phone || "");
+        setAdminPermissions(selectedAdmin.permissions || []);
+        setAdminStatus(selectedAdmin.status || "ACTIVE");
+      } catch (error) {
+        toast.error("Impossible de charger les informations administrateur");
+      }
+    };
+
+    loadAdmin();
+  }, []);
+
+  const handleSave = async () => {
+    if (activeTab === "general") {
+      const payload: SchoolSettingsRequest = {
+        schoolName,
+        email,
+        phone,
+        address,
+      };
+
+      try {
+        setIsSaving(true);
+        const updatedSettings = await schoolSettingsService.update(payload);
+        setSchoolName(updatedSettings.schoolName);
+        setEmail(updatedSettings.email);
+        setPhone(updatedSettings.phone);
+        setAddress(updatedSettings.address);
+        toast.success("Paramètres généraux mis à jour");
+      } catch (error) {
+        toast.error("Échec de la mise à jour des paramètres généraux");
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
+    if (activeTab !== "personnel") {
+      toast.success("Paramètres enregistrés");
+      return;
+    }
+
+    if (!adminId) {
+      toast.error("Aucun administrateur trouvé dans la base de données");
+      return;
+    }
+
+    if (newPassword || confirmPassword || currentPassword) {
+      if (!currentPassword) {
+        toast.error("Veuillez saisir le mot de passe actuel");
+        return;
+      }
+      if (!newPassword) {
+        toast.error("Veuillez saisir un nouveau mot de passe");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error("La confirmation du mot de passe ne correspond pas");
+        return;
+      }
+    }
+
+    const payload: AgentRequest = {
+      name: adminName,
+      email: adminEmail,
+      phone: adminPhone,
+      status: adminStatus,
+      permissions: adminPermissions,
+      password: newPassword ? newPassword : undefined,
+    };
+
+    try {
+      setIsSaving(true);
+      const updatedAdmin = await agentService.update(adminId, payload);
+      setAdminName(updatedAdmin.name);
+      setAdminEmail(updatedAdmin.email);
+      setAdminPhone(updatedAdmin.phone || "");
+      setAdminPermissions(updatedAdmin.permissions || []);
+      setAdminStatus(updatedAdmin.status || "ACTIVE");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Informations administrateur mises à jour");
+    } catch (error) {
+      toast.error("Échec de la mise à jour des informations administrateur");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -471,9 +595,9 @@ export default function Parametres() {
               {/* Sticky Save Button */}
               <div className="sticky bottom-0 border-t border-border/50 bg-card/95 backdrop-blur-sm p-4">
                 <div className="flex justify-end">
-                  <Button className="bg-primary hover:bg-primary/90">
+                  <Button className="bg-primary hover:bg-primary/90" onClick={handleSave} disabled={isSaving}>
                     <Save className="mr-2 h-4 w-4" />
-                    Sauvegarder
+                    {isSaving ? "Sauvegarde..." : "Sauvegarder"}
                   </Button>
                 </div>
               </div>

@@ -15,6 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { agentService } from "@/services";
+import { authService } from "@/services";
 
 interface Notification {
   id: number;
@@ -70,6 +72,10 @@ const iconColorMap = {
 export function TopBar() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [adminProfile, setAdminProfile] = useState({
+    name: "Administrateur",
+    email: "admin@edumanager.ma",
+  });
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.classList.contains("dark") ? "dark" : "light";
@@ -92,6 +98,31 @@ export function TopBar() {
     setTheme(initial);
     document.documentElement.classList.toggle("dark", initial === "dark");
   }, []);
+
+  useEffect(() => {
+    const loadAdminProfile = async () => {
+      try {
+        const agents = await agentService.getAll();
+        if (!agents.length) return;
+        const admin = agents.find((agent) => agent.status === "ACTIVE") ?? agents[0];
+        setAdminProfile({
+          name: admin.name,
+          email: admin.email,
+        });
+      } catch (error) {
+        console.error("Failed to load admin profile for header", error);
+      }
+    };
+
+    loadAdminProfile();
+  }, []);
+
+  const adminInitials = adminProfile.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((chunk) => chunk[0]?.toUpperCase() ?? "")
+    .join("") || "AD";
 
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -211,10 +242,10 @@ export function TopBar() {
               <button className="flex items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 hover:bg-secondary transition-colors outline-none">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" />
-                  <AvatarFallback className="bg-primary/20 text-primary text-sm">ML</AvatarFallback>
+                  <AvatarFallback className="bg-primary/20 text-primary text-sm">{adminInitials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-foreground">Marc Leblanc</p>
+                  <p className="text-sm font-medium text-foreground">{adminProfile.name}</p>
                   <p className="text-xs text-muted-foreground">Administrateur</p>
                 </div>
               </button>
@@ -224,11 +255,11 @@ export function TopBar() {
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" />
-                  <AvatarFallback className="bg-primary/20 text-primary">ML</AvatarFallback>
+                  <AvatarFallback className="bg-primary/20 text-primary">{adminInitials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">Marc Leblanc</p>
-                  <p className="text-xs text-muted-foreground truncate">marc@edumanager.ma</p>
+                  <p className="text-sm font-semibold text-foreground">{adminProfile.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{adminProfile.email}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <ShieldCheck className="h-3 w-3 text-primary" />
                     <span className="text-xs text-primary font-medium">Administrateur</span>
@@ -252,7 +283,16 @@ export function TopBar() {
               <div className="py-1">
                 <DropdownMenuItem
                   className="cursor-pointer gap-2.5 px-4 py-2.5 text-sm text-red-500 focus:text-red-500 focus:bg-red-500/10"
-                  onClick={() => navigate("/login")}
+                  onClick={async () => {
+                    try {
+                      await authService.logoutRemote();
+                    } catch (error) {
+                      // Even if backend log fails, local logout must still happen.
+                    } finally {
+                      authService.logout();
+                      navigate("/login");
+                    }
+                  }}
                 >
                   <LogOut className="h-4 w-4" />
                   Déconnexion

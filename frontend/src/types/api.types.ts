@@ -85,6 +85,20 @@ export interface AgentRequest {
   permissions: string[];
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  role: string;
+  message: string;
+}
+
 // Attendance DTOs
 export interface AttendanceDTO {
   id: number;
@@ -246,6 +260,23 @@ export interface FinancialSummaryDTO {
   totalPending: number;
   totalOverdue: number;
   transactionCount: number;
+}
+
+export interface SchoolSettingsDTO {
+  id: number;
+  schoolName: string;
+  email: string;
+  phone: string;
+  address: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SchoolSettingsRequest {
+  schoolName: string;
+  email: string;
+  phone: string;
+  address: string;
 }
 
 // Paginated Response

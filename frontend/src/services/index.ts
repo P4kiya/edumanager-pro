@@ -7,6 +7,8 @@ export { default as gradeService } from './grade.service';
 export { default as transactionService } from './transaction.service';
 export { default as auditLogService } from './audit-log.service';
 export { default as teacherService } from './teacher.service';
+export { default as authService } from './auth.service';
+export { default as schoolSettingsService } from './school-settings.service';
 export { apiClient } from './api-client';
 
 // Re-export types for convenience

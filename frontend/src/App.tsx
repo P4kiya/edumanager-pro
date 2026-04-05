@@ -1,7 +1,8 @@
-import { HashRouter, BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { HashRouter, BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { authService } from "@/services";
 
 import Index from "@/pages/Index";
 import Etudiants from "@/pages/Etudiants";
@@ -26,6 +27,15 @@ const Router = isElectron ? HashRouter : BrowserRouter;
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
+  const isAuthenticated = authService.isAuthenticated();
+
+  if (!isAuthenticated && !isLoginPage) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isAuthenticated && isLoginPage) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="flex bg-background min-h-screen font-sans">
@@ -53,6 +63,7 @@ function AppContent() {
             <Route path="/agents/:id" element={<AgentProfile />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/parametres" element={<Parametres />} />
+            <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
           </Routes>
         </ErrorBoundary>
       </main>
