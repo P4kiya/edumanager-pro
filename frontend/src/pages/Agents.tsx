@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus, MoreHorizontal, Pencil, Trash2,
@@ -22,38 +22,27 @@ import {
 import { toast } from "sonner";
 import { AgentDialog, PERMISSION_MODULES } from "@/components/agents/AgentDialog";
 import type { Agent } from "@/components/agents/types";
+import { agentService } from "@/services";
+import type { AgentDTO, AgentRequest } from "@/types/api.types";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+const toUiAgent = (agent: AgentDTO): Agent => ({
+  id: agent.id,
+  name: agent.name,
+  email: agent.email,
+  phone: agent.phone || "",
+  status: agent.status === "ACTIVE" ? "active" : "inactive",
+  permissions: agent.permissions || [],
+  createdAt: agent.createdAt || new Date().toISOString(),
+});
 
-const initialAgents: Agent[] = [
-  {
-    id: 1,
-    name: "Sarah El Mansouri",
-    email: "sarah.elmansouri@edumanager.ma",
-    phone: "+212 661 234 567",
-    status: "active",
-    permissions: ["students", "presences", "notes", "parents"],
-    createdAt: "2024-09-01",
-  },
-  {
-    id: 2,
-    name: "Karim Benali",
-    email: "karim.benali@edumanager.ma",
-    phone: "+212 662 345 678",
-    status: "active",
-    permissions: ["students", "parents", "presences", "emploi_du_temps"],
-    createdAt: "2024-09-15",
-  },
-  {
-    id: 3,
-    name: "Amina Tazi",
-    email: "amina.tazi@edumanager.ma",
-    phone: "+212 663 456 789",
-    status: "inactive",
-    permissions: ["finances"],
-    createdAt: "2024-10-01",
-  },
-];
+const toAgentRequest = (data: Omit<Agent, "id" | "createdAt">): AgentRequest => ({
+  name: data.name,
+  email: data.email,
+  phone: data.phone || "",
+  password: data.password,
+  status: data.status === "active" ? "ACTIVE" : "INACTIVE",
+  permissions: data.permissions || [],
+});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -79,11 +68,27 @@ function avatarColor(name: string) {
 
 export default function Agents() {
   const navigate = useNavigate();
-  const [agents, setAgents]             = useState<Agent[]>(initialAgents);
+  const [agents, setAgents]             = useState<Agent[]>([]);
+  const [isLoading, setIsLoading]       = useState(true);
   const [search, setSearch]             = useState("");
   const [dialogOpen, setDialogOpen]     = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [deletingId, setDeletingId]     = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadAgents = async () => {
+      try {
+        setIsLoading(true);
+        const response = await agentService.getAll();
+        setAgents(response.map(toUiAgent));
+      } catch (error) {
+        toast.error("Impossible de charger les utilisateurs");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAgents();
+  }, []);
 
   const filtered = agents.filter(
     (a) =>
@@ -96,33 +101,52 @@ export default function Agents() {
 
   // ── Handlers ──
 
-  const handleSave = (data: Omit<Agent, "id" | "createdAt">) => {
-    if (editingAgent) {
-      setAgents((prev) => prev.map((a) => a.id === editingAgent.id ? { ...a, ...data } : a));
-      toast.success("Utilisateur modifié avec succès");
-    } else {
-      const newAgent: Agent = {
-        ...data,
-        id: Date.now(),
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setAgents((prev) => [...prev, newAgent]);
-      toast.success(`Compte utilisateur créé pour ${data.name}`);
+  const handleSave = async (data: Omit<Agent, "id" | "createdAt">) => {
+    try {
+      const payload = toAgentRequest(data);
+      if (editingAgent) {
+        const updated = await agentService.update(editingAgent.id, payload);
+        setAgents((prev) => prev.map((a) => (a.id === editingAgent.id ? toUiAgent(updated) : a)));
+        toast.success("Utilisateur modifié avec succès");
+      } else {
+        const created = await agentService.create(payload);
+        setAgents((prev) => [...prev, toUiAgent(created)]);
+        toast.success(`Compte utilisateur créé pour ${data.name}`);
+      }
+      setEditingAgent(null);
+    } catch (error) {
+      toast.error("Échec de l'enregistrement de l'utilisateur");
     }
-    setEditingAgent(null);
   };
 
-  const handleToggleStatus = (agent: Agent) => {
+  const handleToggleStatus = async (agent: Agent) => {
     const next = agent.status === "active" ? "inactive" : "active";
-    setAgents((prev) => prev.map((a) => a.id === agent.id ? { ...a, status: next } : a));
-    toast.success(next === "active" ? `${agent.name} réactivé` : `${agent.name} désactivé`);
+    try {
+      const payload: AgentRequest = {
+        name: agent.name,
+        email: agent.email,
+        phone: agent.phone || "",
+        status: next === "active" ? "ACTIVE" : "INACTIVE",
+        permissions: agent.permissions,
+      };
+      const updated = await agentService.update(agent.id, payload);
+      setAgents((prev) => prev.map((a) => (a.id === agent.id ? toUiAgent(updated) : a)));
+      toast.success(next === "active" ? `${agent.name} réactivé` : `${agent.name} désactivé`);
+    } catch (error) {
+      toast.error("Impossible de mettre à jour le statut");
+    }
   };
 
-  const handleDelete = (id: number) => {
-    const agent = agents.find((a) => a.id === id);
-    setAgents((prev) => prev.filter((a) => a.id !== id));
-    toast.success(`Utilisateur ${agent?.name} supprimé`);
-    setDeletingId(null);
+  const handleDelete = async (id: number) => {
+    try {
+      const agent = agents.find((a) => a.id === id);
+      await agentService.delete(id);
+      setAgents((prev) => prev.filter((a) => a.id !== id));
+      toast.success(`Utilisateur ${agent?.name} supprimé`);
+      setDeletingId(null);
+    } catch (error) {
+      toast.error("Impossible de supprimer l'utilisateur");
+    }
   };
 
   return (
@@ -189,10 +213,17 @@ export default function Agents() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && (
+                {!isLoading && filtered.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
                       Aucun utilisateur trouvé
+                    </TableCell>
+                  </TableRow>
+                )}
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                      Chargement des utilisateurs...
                     </TableCell>
                   </TableRow>
                 )}

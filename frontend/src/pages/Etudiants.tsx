@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StudentForm, Student } from "@/components/dashboard/StudentForm";
 import {
@@ -29,7 +29,8 @@ import { Search, Plus, MoreHorizontal, Pencil, Trash2, Filter, X, ChevronLeft, C
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { ObjectifBaseStudentsData as studentsData } from "@/data/mockStudents";
+import { parentService, studentService } from "@/services";
+import { StudentRequest } from "@/types/api.types";
 
 export type { Student } from "@/components/dashboard/StudentForm";
 
@@ -37,9 +38,54 @@ const classes = ["Toutes", "6ème A", "6ème B", "5ème A", "5ème B", "4ème A"
 const statuts = ["Tous", "actif", "inactif"];
 const itemsPerPageOptions = [5, 10, 20, 50];
 
+const toUiStudent = (student: {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatarUrl: string;
+  address: string;
+  birthDate: string;
+  status: string;
+  className: string;
+  parentId: number;
+  parentName: string;
+}): Student => ({
+  id: student.id,
+  nom: student.lastName,
+  prenom: student.firstName,
+  email: student.email || "",
+  telephone: student.phone || "",
+  classe: student.className || "",
+  dateNaissance: student.birthDate || "",
+  adresse: student.address || "",
+  statut: student.status === "ACTIVE" ? "actif" : "inactif",
+  avatar:
+    student.avatarUrl ||
+    `https://api.dicebear.com/7.x/initials/svg?seed=${student.firstName}%20${student.lastName}`,
+  parentId: student.parentId,
+  parentName: student.parentName,
+});
+
+const toRequestStudent = (student: Omit<Student, "id"> & { id?: number }): StudentRequest => ({
+  firstName: student.prenom,
+  lastName: student.nom,
+  email: student.email,
+  phone: student.telephone,
+  avatarUrl: student.avatar,
+  address: student.adresse,
+  birthDate: student.dateNaissance,
+  status: student.statut === "actif" ? "ACTIVE" : "INACTIVE",
+  className: student.classe,
+  parentId: student.parentId ?? 0,
+});
+
 const Etudiants = () => {
   const navigate = useNavigate();
-  const [students, setStudents] = useState<Student[]>(studentsData);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [parents, setParents] = useState<Array<{ id: number; firstName: string; lastName: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClasse, setSelectedClasse] = useState("Toutes");
   const [selectedStatut, setSelectedStatut] = useState("Tous");
@@ -48,6 +94,37 @@ const Etudiants = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [studentsRes, parentsRes] = await Promise.all([
+          studentService.getAll(0, 200),
+          parentService.getAll(),
+        ]);
+
+        setStudents(studentsRes.content.map(toUiStudent));
+        setParents(
+          parentsRes.map((parent) => ({
+            id: parent.id,
+            firstName: parent.firstName,
+            lastName: parent.lastName,
+          })),
+        );
+      } catch (error) {
+        toast({
+          title: "Erreur de chargement",
+          description: "Impossible de charger les étudiants.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
@@ -85,41 +162,52 @@ const Etudiants = () => {
     setFormOpen(true);
   };
 
-  const handleDeleteStudent = (id: string) => {
-    setStudents(students.filter((s) => s.id !== id));
-    toast({
-      title: "Étudiant supprimé",
-      description: "L'étudiant a été supprimé avec succès.",
-    });
-    // Adjust current page if needed
-    const newTotal = Math.ceil((filteredStudents.length - 1) / itemsPerPage);
-    if (currentPage > newTotal && newTotal > 0) {
-      setCurrentPage(newTotal);
+  const handleDeleteStudent = async (id: number) => {
+    try {
+      await studentService.delete(id);
+      setStudents((prev) => prev.filter((s) => s.id !== id));
+      toast({
+        title: "Étudiant supprimé",
+        description: "L'étudiant a été supprimé avec succès.",
+      });
+      const newTotal = Math.ceil((filteredStudents.length - 1) / itemsPerPage);
+      if (currentPage > newTotal && newTotal > 0) {
+        setCurrentPage(newTotal);
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'étudiant.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleSaveStudent = (data: Omit<Student, "id"> & { id?: string }) => {
-    if (data.id) {
-      setStudents(students.map((s) => 
-        s.id === data.id 
-          ? { ...s, ...data, avatar: data.avatar || s.avatar } 
-          : s
-      ));
+  const handleSaveStudent = async (data: Omit<Student, "id"> & { id?: number }) => {
+    try {
+      const payload = toRequestStudent(data);
+
+      if (data.id) {
+        const updated = await studentService.update(data.id, payload);
+        setStudents((prev) => prev.map((s) => (s.id === data.id ? toUiStudent(updated) : s)));
+        toast({
+          title: "Étudiant modifié",
+          description: "Les informations ont été mises à jour.",
+        });
+      } else {
+        const created = await studentService.create(payload);
+        setStudents((prev) => [toUiStudent(created), ...prev]);
+        setCurrentPage(1);
+        toast({
+          title: "Étudiant ajouté",
+          description: `${data.prenom} ${data.nom} a été ajouté avec succès.`,
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Étudiant modifié",
-        description: "Les informations ont été mises à jour.",
-      });
-    } else {
-      const newStudent: Student = {
-        ...data,
-        id: Date.now().toString(),
-        avatar: data.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${data.prenom}%20${data.nom}`,
-      };
-      setStudents([newStudent, ...students]);
-      setCurrentPage(1); // Go to first page to see new student
-      toast({
-        title: "Étudiant ajouté",
-        description: `${data.prenom} ${data.nom} a été ajouté avec succès.`,
+        title: "Erreur",
+        description: "Impossible d'enregistrer l'étudiant.",
+        variant: "destructive",
       });
     }
   };
@@ -241,7 +329,7 @@ const Etudiants = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedStudents.map((student) => (
+            {!isLoading && paginatedStudents.map((student) => (
               <TableRow 
                 key={student.id} 
                 className="border-border transition-colors hover:bg-secondary/50"
@@ -306,10 +394,17 @@ const Etudiants = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {paginatedStudents.length === 0 && (
+            {!isLoading && paginatedStudents.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                   Aucun étudiant trouvé
+                </TableCell>
+              </TableRow>
+            )}
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  Chargement des étudiants...
                 </TableCell>
               </TableRow>
             )}
@@ -427,6 +522,7 @@ const Etudiants = () => {
         onOpenChange={setFormOpen}
         student={editingStudent}
         onSave={handleSaveStudent}
+        parents={parents}
       />
     </DashboardLayout>
   );

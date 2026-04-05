@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface Student {
-  id: string;
+  id: number;
   nom: string;
   prenom: string;
   email: string;
@@ -29,18 +29,33 @@ export interface Student {
   adresse: string;
   statut: "actif" | "inactif";
   avatar: string;
+  parentId?: number;
+  parentName?: string;
+}
+
+interface ParentOption {
+  id: number;
+  firstName: string;
+  lastName: string;
 }
 
 interface StudentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   student?: Student | null;
-  onSave: (student: Omit<Student, "id"> & { id?: string }) => void;
+  onSave: (student: Omit<Student, "id"> & { id?: number }) => void;
+  parents?: ParentOption[];
 }
 
 const classes = ["6ème A", "6ème B", "5ème A", "5ème B", "4ème A", "4ème B", "3ème A", "3ème B", "3ème C"];
 
-export function StudentForm({ open, onOpenChange, student, onSave }: StudentFormProps) {
+export function StudentForm({
+  open,
+  onOpenChange,
+  student,
+  onSave,
+  parents = [],
+}: StudentFormProps) {
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -51,6 +66,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
     adresse: "",
     statut: "actif" as "actif" | "inactif",
     avatar: "",
+    parentId: 0,
   });
 
   useEffect(() => {
@@ -65,6 +81,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
         adresse: student.adresse,
         statut: student.statut,
         avatar: student.avatar || "",
+        parentId: student.parentId ?? 0,
       });
     } else {
       setFormData({
@@ -77,19 +94,20 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
         adresse: "",
         statut: "actif",
         avatar: "",
+        parentId: parents[0]?.id ?? 0,
       });
     }
-  }, [student, open]);
+  }, [student, open, parents]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, avatar: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, avatar: reader.result as string });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -97,6 +115,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
     onSave({
       ...formData,
       id: student?.id,
+      parentId: formData.parentId || undefined,
     });
     onOpenChange(false);
   };
@@ -116,13 +135,13 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {/* Avatar + Prénom/Nom row */}
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-center gap-2 shrink-0">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={formData.avatar} />
                 <AvatarFallback className="bg-primary/20 text-primary text-xl">
-                  {formData.prenom?.[0] || ""}{formData.nom?.[0] || ""}
+                  {formData.prenom?.[0] || ""}
+                  {formData.nom?.[0] || ""}
                 </AvatarFallback>
               </Avatar>
               <Input
@@ -137,7 +156,7 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
                 variant="outline"
                 size="sm"
                 className="text-xs px-3"
-                onClick={() => document.getElementById('avatar')?.click()}
+                onClick={() => document.getElementById("avatar")?.click()}
               >
                 Choisir une image
               </Button>
@@ -178,7 +197,6 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
             </div>
           </div>
 
-          {/* Remaining fields in 2-column grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="telephone" className="text-foreground">Téléphone</Label>
@@ -201,24 +219,54 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="classe" className="text-foreground">Niveau</Label>
-              <Select
-                value={formData.classe}
-                onValueChange={(value) => setFormData({ ...formData, classe: value })}
-              >
+              <Label htmlFor="classe" className="text-foreground">Classe</Label>
+              <Select value={formData.classe} onValueChange={(value) => setFormData({ ...formData, classe: value })}>
                 <SelectTrigger className="bg-secondary/50 border-border text-foreground">
-                  <SelectValue placeholder="Sélectionner..." />
+                  <SelectValue placeholder="Sélectionner une classe" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  {classes.map((c) => (
-                    <SelectItem key={c} value={c} className="text-foreground">
-                      {c}
+                  {classes.map((classe) => (
+                    <SelectItem key={classe} value={classe} className="text-foreground">
+                      {classe}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="statut" className="text-foreground">Statut</Label>
+              <Select
+                value={formData.statut}
+                onValueChange={(value: "actif" | "inactif") => setFormData({ ...formData, statut: value })}
+              >
+                <SelectTrigger className="bg-secondary/50 border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="actif" className="text-foreground">Actif</SelectItem>
+                  <SelectItem value="inactif" className="text-foreground">Inactif</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="parentId" className="text-foreground">Parent</Label>
+              <Select
+                value={formData.parentId ? formData.parentId.toString() : ""}
+                onValueChange={(value) => setFormData({ ...formData, parentId: Number(value) })}
+              >
+                <SelectTrigger className="bg-secondary/50 border-border text-foreground">
+                  <SelectValue placeholder="Sélectionner un parent" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {parents.map((parent) => (
+                    <SelectItem key={parent.id} value={parent.id.toString()} className="text-foreground">
+                      {parent.firstName} {parent.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2 col-span-2">
               <Label htmlFor="adresse" className="text-foreground">Adresse</Label>
               <Input
                 id="adresse"
@@ -229,16 +277,19 @@ export function StudentForm({ open, onOpenChange, student, onSave }: StudentForm
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-border text-foreground hover:bg-secondary"
+              className="border-border text-foreground"
             >
               Annuler
             </Button>
-            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              type="submit"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               {student ? "Enregistrer" : "Ajouter"}
             </Button>
           </div>

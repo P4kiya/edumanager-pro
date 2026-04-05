@@ -15,7 +15,7 @@ import { X, Search, UserPlus } from "lucide-react";
 import { ObjectifBaseStudentsData } from "@/data/mockStudents";
 
 export interface Parent {
-  id: string;
+  id: number;
   nom: string;
   prenom: string;
   email: string;
@@ -29,17 +29,24 @@ export interface Parent {
   dateNaissance?: string;
   genre?: "homme" | "femme" | "";
   situation?: "marié" | "célibataire" | "divorcé" | "veuf" | "";
-  childrenIds: string[];
+  childrenIds: number[];
 }
 
 interface ParentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   parent?: Parent | null;
-  onSave: (parent: Omit<Parent, "id"> & { id?: string }) => void;
+  onSave: (parent: Omit<Parent, "id"> & { id?: number }) => void;
+  hideChildrenSelection?: boolean;
 }
 
-export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormProps) {
+export function ParentForm({
+  open,
+  onOpenChange,
+  parent,
+  onSave,
+  hideChildrenSelection = false,
+}: ParentFormProps) {
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -54,7 +61,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
     dateNaissance: "",
     genre: "" as "homme" | "femme" | "",
     situation: "" as "marié" | "célibataire" | "divorcé" | "veuf" | "",
-    childrenIds: [] as string[],
+    childrenIds: [] as number[],
   });
   const [studentSearch, setStudentSearch] = useState("");
 
@@ -108,7 +115,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
     }
   };
 
-  const toggleChild = (studentId: string) => {
+  const toggleChild = (studentId: number) => {
     setFormData((prev) => ({
       ...prev,
       childrenIds: prev.childrenIds.includes(studentId)
@@ -117,7 +124,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
     }));
   };
 
-  const removeChild = (studentId: string) => {
+  const removeChild = (studentId: number) => {
     setFormData((prev) => ({
       ...prev,
       childrenIds: prev.childrenIds.filter((id) => id !== studentId),
@@ -137,12 +144,12 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
     const name = `${s.prenom} ${s.nom}`.toLowerCase();
     return (
       name.includes(studentSearch.toLowerCase()) &&
-      !formData.childrenIds.includes(s.id)
+      !formData.childrenIds.includes(Number(s.id))
     );
   });
 
   const selectedStudents = ObjectifBaseStudentsData.filter((s) =>
-    formData.childrenIds.includes(s.id)
+    formData.childrenIds.includes(Number(s.id))
   );
 
   return (
@@ -313,6 +320,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
           </div>
 
           {/* Children / Students relation */}
+          {!hideChildrenSelection && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <UserPlus className="h-4 w-4 text-primary" />
@@ -334,7 +342,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
                     {s.prenom} {s.nom} · {s.classe}
                     <button
                       type="button"
-                      onClick={() => removeChild(s.id)}
+                    onClick={() => removeChild(Number(s.id))}
                       className="ml-0.5 hover:text-destructive"
                     >
                       <X className="h-3 w-3" />
@@ -366,7 +374,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => toggleChild(s.id)}
+                      onClick={() => toggleChild(Number(s.id))}
                       className="flex items-center gap-3 w-full px-3 py-2 hover:bg-primary/10 transition-colors text-left"
                     >
                       <Avatar className="h-8 w-8">
@@ -386,6 +394,7 @@ export function ParentForm({ open, onOpenChange, parent, onSave }: ParentFormPro
               </div>
             </div>
           </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
