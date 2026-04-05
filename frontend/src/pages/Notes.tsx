@@ -423,7 +423,7 @@ export default function Notes() {
                     {students.map(student => {
                       const avg = calculateAverage(student.id);
                       return (
-                        <tr key={student.id} className="hover:bg-white/5 transition-colors">
+                        <tr key={student.id} className="hover:bg-muted/50 transition-colors">
                           <td className="sticky left-0 z-10 bg-card/95 px-4 py-3 font-medium text-foreground">{student.prenom} {student.nom}</td>
                           {evaluations.map(ev => (
                             <td key={ev.id} className="px-3 py-3 text-center">
@@ -650,7 +650,7 @@ export default function Notes() {
                 {evalTypes.map(t => (
                   <button key={t.value} type="button" onClick={() => setNewEval({ ...newEval, type: t.value })}
                     className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                      newEval.type === t.value ? typeBadgeColor[t.value] + " border-current" : "border-border text-muted-foreground hover:bg-white/5")}>
+                      newEval.type === t.value ? typeBadgeColor[t.value] + " border-current" : "border-border text-muted-foreground hover:bg-muted/50")}>
                     {t.label}
                   </button>
                 ))}

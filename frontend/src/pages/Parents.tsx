@@ -204,7 +204,7 @@ export default function Parents() {
                 {filteredParents.map((parent) => (
                   <TableRow
                     key={parent.id}
-                    className="border-border/50 hover:bg-white/5 cursor-pointer group"
+                    className="border-border/50 hover:bg-muted/50 cursor-pointer group"
                     onClick={() => navigate(`/parents/${parent.id}`)}
                   >
                     <TableCell>

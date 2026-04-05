@@ -2,6 +2,16 @@
 <html lang="fr">
   <head>
     <script>(function(){var t=localStorage.getItem('theme');document.documentElement.classList.toggle('dark',t!=='light')})()</script>
+    <script>
+      // Electron nodeIntegration fix: prevent Node.js globals from breaking
+      // bundled web modules that check typeof require / module / exports.
+      // We preserve window.require under window.electronRequire for IPC use.
+      (function () {
+        if (typeof window !== 'undefined' && typeof window.require === 'function') {
+          window.electronRequire = window.require;
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EduManager - Gestion Scolaire</title>

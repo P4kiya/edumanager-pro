@@ -46,7 +46,7 @@ export function PaymentReceipt({ transaction, open, onOpenChange }: PaymentRecei
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg bg-[#0A0F1C] border-border overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg bg-popover border-border overflow-y-auto">
         <SheetHeader className="text-left">
           <SheetTitle className="text-foreground">Reçu de Paiement</SheetTitle>
         </SheetHeader>

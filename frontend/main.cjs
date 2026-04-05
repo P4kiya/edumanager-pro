@@ -15,10 +15,11 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false, // Ensure this matches your security needs; often set to true with preload
-      enableRemoteModule: true,
+      contextIsolation: false,
+      webSecurity: false, // Allow loading HTTPS resources from file:// (avatars, etc.)
     },
     autoHideMenuBar: true,
+    backgroundColor: "#0a0f1c", // Prevent white flash before React renders
   });
 
   if (process.env.NODE_ENV === "development") {
@@ -27,6 +28,21 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "dist", "index.html"));
   }
+
+  // Log renderer errors to help diagnose blank/white pages
+  win.webContents.on("did-fail-load", (event, errorCode, errorDescription, validatedURL) => {
+    log.error(`Page failed to load: ${errorDescription} (${errorCode}) — ${validatedURL}`);
+  });
+
+  win.webContents.on("render-process-gone", (event, details) => {
+    log.error(`Renderer process gone: ${details.reason}`);
+    // Reload the app when renderer crashes
+    if (process.env.NODE_ENV === "development") {
+      win.loadURL("http://localhost:8080");
+    } else {
+      win.loadFile(path.join(__dirname, "dist", "index.html"));
+    }
+  });
 
   // Trigger update check on window creation
   autoUpdater.checkForUpdates();

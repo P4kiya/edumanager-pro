@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-type TabId = "general" | "users" | "notifications" | "payments";
+type TabId = "general" | "notifications" | "payments";
 
 interface Tab {
   id: TabId;
@@ -25,7 +25,6 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: "general", label: "Général", icon: Building2 },
-  { id: "users", label: "Utilisateurs", icon: Users },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "payments", label: "Paiements", icon: CreditCard },
 ];
@@ -79,7 +78,7 @@ export default function Parametres() {
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
                     activeTab === tab.id
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   <tab.icon className="h-4 w-4" />
@@ -184,53 +183,6 @@ export default function Parametres() {
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Users Tab */}
-              {activeTab === "users" && (
-                <div className="p-6 space-y-6">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">
-                      Gestion des Utilisateurs
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Gérez les accès administrateurs
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    {[
-                      { name: "Marc Leblanc", email: "m.leblanc@edumanager.ma", role: "Super Admin" },
-                      { name: "Sara Bennani", email: "s.bennani@edumanager.ma", role: "Admin" },
-                      { name: "Karim Tazi", email: "k.tazi@edumanager.ma", role: "Comptable" },
-                    ].map((user, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                            <span className="text-sm font-medium text-primary">
-                              {user.name.split(" ").map((n) => n[0]).join("")}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">{user.email}</p>
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded">
-                          {user.role}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Button variant="outline" className="border-border bg-secondary/50 hover:bg-secondary">
-                    <Users className="mr-2 h-4 w-4" />
-                    Inviter un utilisateur
-                  </Button>
                 </div>
               )}
 

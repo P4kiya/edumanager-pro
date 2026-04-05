@@ -212,7 +212,7 @@ export default function ParentProfile() {
                       <button
                         key={student.id}
                         onClick={() => navigate(`/etudiants/${student.id}`)}
-                        className="flex items-center gap-4 w-full p-4 hover:bg-white/5 transition-colors group text-left"
+                        className="flex items-center gap-4 w-full p-4 hover:bg-muted/50 transition-colors group text-left"
                       >
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={student.avatar} />

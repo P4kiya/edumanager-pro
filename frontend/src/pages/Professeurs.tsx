@@ -225,7 +225,7 @@ export default function Professeurs() {
                 <TableRow
                   key={teacher.id}
                   onClick={() => handleRowClick(teacher)}
-                  className="border-border/50 hover:bg-white/5 transition-colors cursor-pointer"
+                  className="border-border/50 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -288,7 +288,7 @@ export default function Professeurs() {
 
       {/* Teacher Profile Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-md bg-[#0f1629] border-border overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-md bg-popover border-border overflow-y-auto">
           {selectedTeacher && (
             <>
               <SheetHeader className="space-y-4">

@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
-import { Search, Bell, CheckCircle, AlertTriangle, Info, CircleDot, Sun, Moon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Bell, CheckCircle, AlertTriangle, Info, CircleDot, Sun, Moon, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Notification {
   id: number;
@@ -59,6 +68,7 @@ const iconColorMap = {
 };
 
 export function TopBar() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
@@ -150,7 +160,7 @@ export function TopBar() {
                   return (
                     <div
                       key={notification.id}
-                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/5 cursor-pointer ${
+                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer ${
                         notification.isRead ? "opacity-60" : ""
                       }`}
                     >
@@ -195,17 +205,61 @@ export function TopBar() {
             </PopoverContent>
           </Popover>
 
-          {/* User */}
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-1.5">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" />
-              <AvatarFallback className="bg-primary/20 text-primary text-sm">ML</AvatarFallback>
-            </Avatar>
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium text-foreground">Marc Leblanc</p>
-              <p className="text-xs text-muted-foreground">Administrateur</p>
-            </div>
-          </div>
+          {/* User dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-1.5 hover:bg-secondary transition-colors outline-none">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" />
+                  <AvatarFallback className="bg-primary/20 text-primary text-sm">ML</AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium text-foreground">Marc Leblanc</p>
+                  <p className="text-xs text-muted-foreground">Administrateur</p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 bg-popover border-border p-0" sideOffset={8}>
+              {/* Profile header */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face" />
+                  <AvatarFallback className="bg-primary/20 text-primary">ML</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Marc Leblanc</p>
+                  <p className="text-xs text-muted-foreground truncate">marc@edumanager.ma</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <ShieldCheck className="h-3 w-3 text-primary" />
+                    <span className="text-xs text-primary font-medium">Administrateur</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu items */}
+              <div className="py-1">
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2.5 px-4 py-2.5 text-sm"
+                  onClick={() => navigate("/parametres")}
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Paramètres
+                </DropdownMenuItem>
+              </div>
+
+              <Separator className="bg-border/50" />
+
+              <div className="py-1">
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2.5 px-4 py-2.5 text-sm text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                  onClick={() => navigate("/login")}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

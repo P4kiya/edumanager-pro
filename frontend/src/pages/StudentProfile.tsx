@@ -395,7 +395,7 @@ export default function StudentProfile() {
                       </TableHeader>
                       <TableBody>
                         {grades.map((grade, idx) => (
-                          <TableRow key={idx} className="border-border/50 hover:bg-white/5">
+                          <TableRow key={idx} className="border-border/50 hover:bg-muted/50">
                             <TableCell className="font-medium text-foreground">{grade.matiere}</TableCell>
                             <TableCell className="text-muted-foreground">{grade.type}</TableCell>
                             <TableCell className="text-muted-foreground">{grade.date}</TableCell>

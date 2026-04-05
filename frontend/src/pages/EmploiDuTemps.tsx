@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Clock, MapPin, User } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Plus, Printer, RotateCcw } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,220 +9,217 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  AssignSlotDialog,
+  type Subject,
+  type ProfessorOption,
+} from "@/components/emploidutemps/AssignSlotDialog";
 
-interface ScheduleEvent {
-  id: number;
-  subject: string;
-  room: string;
-  teacher: string;
-  day: number; // 0 = Lundi, 1 = Mardi, etc.
-  startHour: number;
-  endHour: number;
-  color: "blue" | "purple" | "green" | "orange" | "pink" | "cyan";
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const CLASSES = ["2BAC-A", "2BAC-B", "1BAC-A", "1BAC-B", "TC-A", "TC-B"];
+
+const DAYS: { id: string; label: string }[] = [
+  { id: "lundi",    label: "Lundi"    },
+  { id: "mardi",    label: "Mardi"    },
+  { id: "mercredi", label: "Mercredi" },
+  { id: "jeudi",    label: "Jeudi"    },
+  { id: "vendredi", label: "Vendredi" },
+];
+
+const SLOTS: { id: string; label: string }[] = [
+  { id: "S1", label: "08h00 – 10h00" },
+  { id: "S2", label: "10h00 – 12h00" },
+  { id: "S3", label: "14h00 – 16h00" },
+  { id: "S4", label: "16h00 – 18h00" },
+];
+
+const SUBJECTS: Subject[] = [
+  { id: "math",  label: "Mathématiques",     styles: { bg: "bg-indigo-500/15",  text: "text-indigo-300",   border: "border-indigo-500/30",  dot: "bg-indigo-400"  } },
+  { id: "pc",    label: "Physique-Chimie",   styles: { bg: "bg-amber-500/15",   text: "text-amber-300",    border: "border-amber-500/30",   dot: "bg-amber-400"   } },
+  { id: "fr",    label: "Français",          styles: { bg: "bg-emerald-500/15", text: "text-emerald-300",  border: "border-emerald-500/30", dot: "bg-emerald-400" } },
+  { id: "hg",    label: "Histoire-Géo",      styles: { bg: "bg-rose-500/15",    text: "text-rose-300",     border: "border-rose-500/30",    dot: "bg-rose-400"    } },
+  { id: "svt",   label: "SVT",              styles: { bg: "bg-green-500/15",   text: "text-green-300",    border: "border-green-500/30",   dot: "bg-green-400"   } },
+  { id: "info",  label: "Informatique",      styles: { bg: "bg-cyan-500/15",    text: "text-cyan-300",     border: "border-cyan-500/30",    dot: "bg-cyan-400"    } },
+  { id: "en",    label: "Anglais",           styles: { bg: "bg-blue-500/15",    text: "text-blue-300",     border: "border-blue-500/30",    dot: "bg-blue-400"    } },
+  { id: "ar",    label: "Arabe",             styles: { bg: "bg-orange-500/15",  text: "text-orange-300",   border: "border-orange-500/30",  dot: "bg-orange-400"  } },
+  { id: "eps",   label: "EPS",              styles: { bg: "bg-teal-500/15",    text: "text-teal-300",     border: "border-teal-500/30",    dot: "bg-teal-400"    } },
+  { id: "philo", label: "Philosophie",       styles: { bg: "bg-violet-500/15",  text: "text-violet-300",   border: "border-violet-500/30",  dot: "bg-violet-400"  } },
+];
+
+interface Professor {
+  id: string;
+  name: string;
+  initials: string;
+  subjectIds: string[];
 }
 
-const colorStyles = {
-  blue: {
-    bg: "bg-blue-500/15",
-    border: "border-l-blue-500",
-    text: "text-blue-300",
-    hover: "hover:bg-blue-500/25",
+const PROFESSORS: Professor[] = [
+  { id: "p1",  name: "M. Benali",      initials: "MB", subjectIds: ["math"]            },
+  { id: "p2",  name: "Mme. Alaoui",    initials: "AL", subjectIds: ["pc", "svt"]       },
+  { id: "p3",  name: "M. Dupont",      initials: "MD", subjectIds: ["fr"]              },
+  { id: "p4",  name: "M. El Fassi",    initials: "EF", subjectIds: ["info"]            },
+  { id: "p5",  name: "Mme. Smith",     initials: "SM", subjectIds: ["en"]              },
+  { id: "p6",  name: "M. Berrada",     initials: "BR", subjectIds: ["hg", "philo"]     },
+  { id: "p7",  name: "Mme. Tahiri",    initials: "TH", subjectIds: ["svt", "pc"]       },
+  { id: "p8",  name: "M. Chraibi",     initials: "CH", subjectIds: ["philo", "hg"]     },
+  { id: "p9",  name: "M. Karimi",      initials: "KR", subjectIds: ["eps"]             },
+  { id: "p10", name: "M. Hajji",       initials: "HJ", subjectIds: ["ar"]              },
+  { id: "p11", name: "Mme. Berrada",   initials: "BB", subjectIds: ["math", "pc"]      },
+  { id: "p12", name: "Mme. Cherkaoui", initials: "CK", subjectIds: ["fr", "ar"]        },
+];
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface SlotEntry {
+  matiereId: string;
+  professorId: string;
+}
+
+// classId → dayId → slotId → SlotEntry | null
+type Timetable = Record<string, Record<string, Record<string, SlotEntry | null>>>;
+
+// ── Demo initial data (2BAC-A fully filled, 2BAC-B partial, rest empty) ──────
+
+const INITIAL_TIMETABLE: Timetable = {
+  "2BAC-A": {
+    lundi:    { S1: { matiereId: "math", professorId: "p1"  }, S2: { matiereId: "pc",   professorId: "p2"  }, S3: { matiereId: "fr",  professorId: "p3"  }, S4: null },
+    mardi:    { S1: null,                                        S2: null,                                        S3: { matiereId: "info", professorId: "p4" }, S4: null },
+    mercredi: { S1: { matiereId: "en",  professorId: "p5"  }, S2: { matiereId: "hg",  professorId: "p6"  }, S3: null,                                         S4: null },
+    jeudi:    { S1: { matiereId: "math", professorId: "p1"  }, S2: null,                                        S3: { matiereId: "svt", professorId: "p2"  }, S4: null },
+    vendredi: { S1: null,                                        S2: { matiereId: "philo", professorId: "p8" }, S3: { matiereId: "eps", professorId: "p9"  }, S4: { matiereId: "ar", professorId: "p10" } },
   },
-  purple: {
-    bg: "bg-purple-500/15",
-    border: "border-l-purple-500",
-    text: "text-purple-300",
-    hover: "hover:bg-purple-500/25",
-  },
-  green: {
-    bg: "bg-emerald-500/15",
-    border: "border-l-emerald-500",
-    text: "text-emerald-300",
-    hover: "hover:bg-emerald-500/25",
-  },
-  orange: {
-    bg: "bg-orange-500/15",
-    border: "border-l-orange-500",
-    text: "text-orange-300",
-    hover: "hover:bg-orange-500/25",
-  },
-  pink: {
-    bg: "bg-pink-500/15",
-    border: "border-l-pink-500",
-    text: "text-pink-300",
-    hover: "hover:bg-pink-500/25",
-  },
-  cyan: {
-    bg: "bg-cyan-500/15",
-    border: "border-l-cyan-500",
-    text: "text-cyan-300",
-    hover: "hover:bg-cyan-500/25",
+  "2BAC-B": {
+    lundi:    { S1: { matiereId: "math", professorId: "p11" }, S2: null,                                        S3: null, S4: null },
+    mardi:    { S1: { matiereId: "pc",  professorId: "p2"  }, S2: null,                                        S3: null, S4: null },
+    mercredi: { S1: null,                                        S2: null,                                        S3: { matiereId: "hg", professorId: "p6" }, S4: null },
+    jeudi:    { S1: { matiereId: "info", professorId: "p4"  }, S2: null,                                        S3: null, S4: null },
+    vendredi: { S1: { matiereId: "en",  professorId: "p5"  }, S2: null,                                        S3: null, S4: null },
   },
 };
 
-const scheduleData: ScheduleEvent[] = [
-  {
-    id: 1,
-    subject: "Mathématiques",
-    room: "Salle B2",
-    teacher: "M. Bennani",
-    day: 0,
-    startHour: 8,
-    endHour: 10,
-    color: "blue",
-  },
-  {
-    id: 2,
-    subject: "Physique-Chimie",
-    room: "Labo 3",
-    teacher: "Mme. Alaoui",
-    day: 0,
-    startHour: 10,
-    endHour: 12,
-    color: "purple",
-  },
-  {
-    id: 3,
-    subject: "Français",
-    room: "Salle A1",
-    teacher: "M. Dupont",
-    day: 0,
-    startHour: 14,
-    endHour: 16,
-    color: "pink",
-  },
-  {
-    id: 4,
-    subject: "Informatique",
-    room: "Salle Info 2",
-    teacher: "M. El Fassi",
-    day: 1,
-    startHour: 14,
-    endHour: 16,
-    color: "green",
-  },
-  {
-    id: 5,
-    subject: "Anglais",
-    room: "Salle C4",
-    teacher: "Mme. Smith",
-    day: 2,
-    startHour: 8,
-    endHour: 10,
-    color: "orange",
-  },
-  {
-    id: 6,
-    subject: "Histoire-Géographie",
-    room: "Salle D1",
-    teacher: "M. Berrada",
-    day: 2,
-    startHour: 10,
-    endHour: 12,
-    color: "cyan",
-  },
-  {
-    id: 7,
-    subject: "Mathématiques",
-    room: "Salle B2",
-    teacher: "M. Bennani",
-    day: 3,
-    startHour: 8,
-    endHour: 10,
-    color: "blue",
-  },
-  {
-    id: 8,
-    subject: "Sciences de la Vie",
-    room: "Labo SVT",
-    teacher: "Mme. Tahiri",
-    day: 3,
-    startHour: 14,
-    endHour: 16,
-    color: "green",
-  },
-  {
-    id: 9,
-    subject: "Philosophie",
-    room: "Salle E2",
-    teacher: "M. Chraibi",
-    day: 4,
-    startHour: 10,
-    endHour: 12,
-    color: "purple",
-  },
-  {
-    id: 10,
-    subject: "Éducation Physique",
-    room: "Gymnase",
-    teacher: "M. Karimi",
-    day: 4,
-    startHour: 14,
-    endHour: 16,
-    color: "orange",
-  },
-  {
-    id: 11,
-    subject: "Arabe",
-    room: "Salle A3",
-    teacher: "M. Hajji",
-    day: 5,
-    startHour: 8,
-    endHour: 10,
-    color: "pink",
-  },
-];
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-const hours = Array.from({ length: 11 }, (_, i) => 8 + i); // 08:00 to 18:00
+function getEntry(timetable: Timetable, classId: string, dayId: string, slotId: string): SlotEntry | null {
+  return timetable[classId]?.[dayId]?.[slotId] ?? null;
+}
 
-const classes = [
-  "2ème Année Bac - A",
-  "2ème Année Bac - B",
-  "1ère Année Bac - A",
-  "1ère Année Bac - B",
-  "Tronc Commun - Sciences",
-];
+function subjectById(id: string) {
+  return SUBJECTS.find((s) => s.id === id);
+}
+function professorById(id: string) {
+  return PROFESSORS.find((p) => p.id === id);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function EmploiDuTemps() {
-  const [selectedClass, setSelectedClass] = useState(classes[0]);
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [timetable, setTimetable]       = useState<Timetable>(INITIAL_TIMETABLE);
+  const [selectedClass, setSelectedClass] = useState("2BAC-A");
+  const [dialogOpen, setDialogOpen]     = useState(false);
+  const [editingCell, setEditingCell]   = useState<{ dayId: string; slotId: string } | null>(null);
 
-  const currentWeekDates = useMemo(() => {
-    const today = new Date();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - today.getDay() + 1 + weekOffset * 7);
+  // Current cell's entry
+  const currentEntry = editingCell
+    ? getEntry(timetable, selectedClass, editingCell.dayId, editingCell.slotId)
+    : null;
 
-    return days.map((day, index) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + index);
-      return {
-        day,
-        date: date.getDate(),
-        month: date.toLocaleDateString("fr-FR", { month: "short" }),
-      };
-    });
-  }, [weekOffset]);
+  // Conflict-aware professor list for a given subject at the currently editing slot
+  const getProfessors = useCallback(
+    (subjectId: string): ProfessorOption[] => {
+      if (!editingCell) return [];
+      return PROFESSORS.filter((p) => p.subjectIds.includes(subjectId)).map((p) => {
+        let conflictClass: string | undefined;
+        for (const [classId, days] of Object.entries(timetable)) {
+          if (classId === selectedClass) continue;
+          const entry = days[editingCell.dayId]?.[editingCell.slotId];
+          if (entry?.professorId === p.id) { conflictClass = classId; break; }
+        }
+        return { id: p.id, name: p.name, initials: p.initials, available: !conflictClass, conflictClass };
+      });
+    },
+    [editingCell, timetable, selectedClass]
+  );
 
-  const getEventsForCell = (dayIndex: number, hour: number) => {
-    return scheduleData.filter(
-      (event) =>
-        event.day === dayIndex &&
-        hour >= event.startHour &&
-        hour < event.endHour
-    );
+  const openCell = (dayId: string, slotId: string) => {
+    setEditingCell({ dayId, slotId });
+    setDialogOpen(true);
   };
 
-  const isEventStart = (event: ScheduleEvent, hour: number) => {
-    return event.startHour === hour;
+  const handleAssign = (matiereId: string, professorId: string) => {
+    if (!editingCell) return;
+    setTimetable((prev) => ({
+      ...prev,
+      [selectedClass]: {
+        ...(prev[selectedClass] ?? {}),
+        [editingCell.dayId]: {
+          ...(prev[selectedClass]?.[editingCell.dayId] ?? {}),
+          [editingCell.slotId]: { matiereId, professorId },
+        },
+      },
+    }));
+    const subj = subjectById(matiereId)?.label ?? matiereId;
+    const prof = professorById(professorId)?.name ?? professorId;
+    toast.success(`${subj} assigné à ${prof}`);
   };
+
+  const handleClear = () => {
+    if (!editingCell) return;
+    setTimetable((prev) => ({
+      ...prev,
+      [selectedClass]: {
+        ...(prev[selectedClass] ?? {}),
+        [editingCell.dayId]: {
+          ...(prev[selectedClass]?.[editingCell.dayId] ?? {}),
+          [editingCell.slotId]: null,
+        },
+      },
+    }));
+    toast.success("Créneau libéré");
+  };
+
+  const handleResetClass = () => {
+    setTimetable((prev) => ({ ...prev, [selectedClass]: {} }));
+    toast.success(`Emploi du temps de ${selectedClass} réinitialisé`);
+  };
+
+  const handlePrint = () => {
+    const rows = SLOTS.map((slot) =>
+      `<tr>
+        <td style="padding:8px 12px;font-weight:600;white-space:nowrap;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;color:#64748b">${slot.label}</td>
+        ${DAYS.map((day) => {
+          const entry = getEntry(timetable, selectedClass, day.id, slot.id);
+          if (!entry) return `<td style="padding:8px;border:1px solid #e2e8f0;"></td>`;
+          const subj = subjectById(entry.matiereId);
+          const prof = professorById(entry.professorId);
+          return `<td style="padding:8px;border:1px solid #e2e8f0;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:2px">${subj?.label ?? entry.matiereId}</div>
+            <div style="font-size:11px;color:#64748b">${prof?.name ?? entry.professorId}</div>
+          </td>`;
+        }).join("")}
+      </tr>`
+    ).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Emploi du temps – ${selectedClass}</title>
+    <style>body{font-family:Arial,sans-serif;padding:24px}h2{margin-bottom:16px}table{width:100%;border-collapse:collapse}th{padding:10px 12px;background:#1e293b;color:#fff;font-size:13px;border:1px solid #334155;text-align:left}@media print{body{padding:0}}</style></head>
+    <body><h2>Emploi du temps — ${selectedClass}</h2>
+    <table><thead><tr><th>Horaire</th>${DAYS.map((d) => `<th>${d.label}</th>`).join("")}</tr></thead>
+    <tbody>${rows}</tbody></table></body></html>`;
+
+    const w = window.open("");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.addEventListener("load", () => w.print());
+  };
+
+  // Slot fill stats for the selected class
+  const totalSlots  = DAYS.length * SLOTS.length;
+  const filledSlots = DAYS.reduce((acc, d) =>
+    acc + SLOTS.filter((s) => getEntry(timetable, selectedClass, d.id, s.id) !== null).length, 0
+  );
 
   return (
     <DashboardLayout>
@@ -229,197 +227,146 @@ export default function EmploiDuTemps() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Emploi du temps
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground">Emploi du temps</h1>
             <p className="text-sm text-muted-foreground">
-              Gérez et consultez les plannings de cours
+              {filledSlots}/{totalSlots} créneaux assignés · {selectedClass}
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            {/* Class Selector */}
+          <div className="flex items-center gap-2 flex-wrap">
             <Select value={selectedClass} onValueChange={setSelectedClass}>
-              <SelectTrigger className="w-[200px] border-border bg-secondary/50">
-                <SelectValue placeholder="Sélectionner une classe" />
+              <SelectTrigger className="w-[160px] border-border bg-secondary/50">
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent className="border-border bg-[#111827]">
-                {classes.map((cls) => (
-                  <SelectItem key={cls} value={cls}>
-                    {cls}
-                  </SelectItem>
+              <SelectContent className="border-border bg-popover">
+                {CLASSES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
-            {/* Week Navigation */}
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setWeekOffset((prev) => prev - 1)}
-                className="border-border bg-secondary/50 hover:bg-secondary"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setWeekOffset(0)}
-                className="border-border bg-secondary/50 hover:bg-secondary px-3"
-              >
-                Aujourd'hui
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setWeekOffset((prev) => prev + 1)}
-                className="border-border bg-secondary/50 hover:bg-secondary"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border bg-secondary/50 hover:bg-secondary gap-2"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4" />
+              Imprimer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10 gap-2"
+              onClick={handleResetClass}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Réinitialiser
+            </Button>
           </div>
         </div>
 
-        {/* Timetable Grid */}
-        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-          {/* Days Header */}
-          <div className="grid grid-cols-[80px_repeat(6,1fr)] border-b border-border/50">
-            <div className="p-3 border-r border-border/30" />
-            {currentWeekDates.map((dateInfo, index) => (
-              <div
-                key={index}
-                className="p-3 text-center border-r border-border/30 last:border-r-0"
-              >
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {dateInfo.day}
-                </p>
-                <p className="text-lg font-semibold text-foreground mt-0.5">
-                  {dateInfo.date}{" "}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    {dateInfo.month}
-                  </span>
-                </p>
-              </div>
-            ))}
-          </div>
+        {/* Timetable grid */}
+        <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm overflow-x-auto">
+          <table className="w-full min-w-[700px] border-collapse">
+            <thead>
+              <tr>
+                {/* empty corner */}
+                <th className="w-[130px] border-b border-r border-border/50 p-3" />
+                {DAYS.map((day) => (
+                  <th
+                    key={day.id}
+                    className="border-b border-r border-border/50 p-3 text-center text-sm font-semibold text-foreground last:border-r-0"
+                  >
+                    {day.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SLOTS.map((slot, slotIdx) => (
+                <tr key={slot.id}>
+                  {/* Time label */}
+                  <td
+                    className={cn(
+                      "border-r border-border/50 px-3 py-2 text-right",
+                      slotIdx < SLOTS.length - 1 && "border-b"
+                    )}
+                  >
+                    <p className="text-xs font-semibold text-muted-foreground">{slot.label}</p>
+                  </td>
 
-          {/* Time Grid */}
-          <div className="grid grid-cols-[80px_repeat(6,1fr)]">
-            {hours.map((hour) => (
-              <div key={hour} className="contents">
-                {/* Time Label */}
-                <div className="p-2 text-right pr-4 border-r border-border/30 border-b border-border/30 flex items-start justify-end">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {hour.toString().padStart(2, "0")}:00
-                  </span>
-                </div>
+                  {/* Day cells */}
+                  {DAYS.map((day, dayIdx) => {
+                    const entry = getEntry(timetable, selectedClass, day.id, slot.id);
+                    const subj  = entry ? subjectById(entry.matiereId) : null;
+                    const prof  = entry ? professorById(entry.professorId) : null;
 
-                {/* Day Cells */}
-                {days.map((_, dayIndex) => {
-                  const events = getEventsForCell(dayIndex, hour);
-                  const eventToRender = events.find((e) =>
-                    isEventStart(e, hour)
-                  );
-
-                  return (
-                    <div
-                      key={`${dayIndex}-${hour}`}
-                      className="relative min-h-[60px] border-r border-b border-border/30 last:border-r-0 p-1"
-                    >
-                      {eventToRender && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`absolute inset-1 z-10 rounded-lg border-l-4 ${colorStyles[eventToRender.color].bg
-                                  } ${colorStyles[eventToRender.color].border} ${colorStyles[eventToRender.color].hover
-                                  } cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20 p-2.5 flex flex-col justify-center`}
-                                style={{
-                                  height: `calc(${(eventToRender.endHour -
-                                      eventToRender.startHour) *
-                                    100
-                                    }% + ${(eventToRender.endHour -
-                                      eventToRender.startHour -
-                                      1) *
-                                    0.5
-                                    }rem - 0.5rem)`,
-                                }}
-                              >
-                                <p
-                                  className={`text-sm font-semibold ${colorStyles[eventToRender.color].text
-                                    } truncate`}
-                                >
-                                  {eventToRender.subject}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1 truncate">
-                                  {eventToRender.room}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {eventToRender.teacher}
-                                </p>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="right"
-                              className="bg-[#1a1f2e] border-border p-3 max-w-[250px]"
-                            >
-                              <div className="space-y-2">
-                                <p
-                                  className={`font-semibold ${colorStyles[eventToRender.color].text
-                                    }`}
-                                >
-                                  {eventToRender.subject}
-                                </p>
-                                <div className="space-y-1.5 text-xs">
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>
-                                      {eventToRender.startHour
-                                        .toString()
-                                        .padStart(2, "0")}
-                                      :00 -{" "}
-                                      {eventToRender.endHour
-                                        .toString()
-                                        .padStart(2, "0")}
-                                      :00
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>{eventToRender.room}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <User className="h-3 w-3" />
-                                    <span>{eventToRender.teacher}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+                    return (
+                      <td
+                        key={day.id}
+                        className={cn(
+                          "p-2 border-border/50",
+                          slotIdx < SLOTS.length - 1 && "border-b",
+                          dayIdx < DAYS.length - 1 && "border-r"
+                        )}
+                      >
+                        {entry && subj ? (
+                          /* Filled cell */
+                          <button
+                            onClick={() => openCell(day.id, slot.id)}
+                            className={cn(
+                              "w-full rounded-lg border px-3 py-2.5 text-left transition-all hover:brightness-110",
+                              subj.styles.bg,
+                              subj.styles.border
+                            )}
+                          >
+                            <p className={cn("text-sm font-semibold truncate", subj.styles.text)}>
+                              {subj.label}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {prof?.name ?? "—"}
+                            </p>
+                          </button>
+                        ) : (
+                          /* Empty cell */
+                          <button
+                            onClick={() => openCell(day.id, slot.id)}
+                            className="w-full h-[62px] rounded-lg border border-dashed border-border/40 text-muted-foreground/40 hover:border-primary/40 hover:text-primary/60 hover:bg-primary/5 transition-all flex items-center justify-center gap-1"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-          <span className="font-medium">Légende :</span>
-          {Object.entries(colorStyles).map(([color, styles]) => (
-            <div key={color} className="flex items-center gap-1.5">
-              <div
-                className={`h-3 w-3 rounded ${styles.bg} border-l-2 ${styles.border}`}
-              />
-              <span className="capitalize">{color}</span>
+        {/* Subject legend */}
+        <div className="flex flex-wrap gap-3 text-xs">
+          {SUBJECTS.map((s) => (
+            <div key={s.id} className="flex items-center gap-1.5">
+              <span className={cn("h-2.5 w-2.5 rounded-full", s.styles.dot)} />
+              <span className="text-muted-foreground">{s.label}</span>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Assignment dialog */}
+      <AssignSlotDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        dayLabel={DAYS.find((d) => d.id === editingCell?.dayId)?.label ?? ""}
+        slotLabel={SLOTS.find((s) => s.id === editingCell?.slotId)?.label ?? ""}
+        subjects={SUBJECTS}
+        getProfessors={getProfessors}
+        currentEntry={currentEntry}
+        onAssign={handleAssign}
+        onClear={handleClear}
+      />
     </DashboardLayout>
   );
 }

@@ -57,15 +57,13 @@ const Login = () => {
 
       {/* Glass card container */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div 
-          className="rounded-2xl p-8 backdrop-blur-xl"
+        <div
+          className="rounded-2xl p-8 backdrop-blur-xl border border-border/40"
           style={{
-            background: 'hsla(222, 41%, 10%, 0.7)',
-            border: '1px solid hsla(0, 0%, 100%, 0.1)',
+            background: 'var(--glass-bg)',
             boxShadow: `
-              0 0 0 1px hsla(0, 0%, 100%, 0.05),
-              0 20px 50px -10px hsla(0, 0%, 0%, 0.5),
-              0 0 80px -20px hsl(217 91% 60% / 0.15)
+              0 20px 50px -10px hsl(var(--foreground) / 0.12),
+              0 0 80px -20px hsl(var(--primary) / 0.15)
             `,
           }}
         >

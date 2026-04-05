@@ -28,16 +28,19 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { WhatsAppNotifyDialog } from "@/components/presences/WhatsAppNotifyDialog";
+import type { AbsentStudent } from "@/components/presences/WhatsAppNotifyDialog";
 
 type AttendanceStatus = "present" | "late" | "absent" | "unset";
 
 interface Session {
   id: string;
-  label: string;         // e.g. "08h00 - 10h00"
-  matiere: string;       // e.g. "Mathématiques"
+  label: string;
+  matiere: string;
   professeur: string;
 }
 
@@ -46,71 +49,68 @@ interface StudentAttendance {
   nom: string;
   prenom: string;
   avatar: string;
-  // map sessionId -> status
+  parentName: string;
+  parentPhone: string;
   statuses: Record<string, AttendanceStatus>;
 }
 
-// Sessions for a school day (each 2h block)
 const sessions: Session[] = [
-  { id: "S1", label: "08h00 – 10h00", matiere: "Mathématiques", professeur: "M. Benali" },
-  { id: "S2", label: "10h00 – 12h00", matiere: "Physique-Chimie", professeur: "Mme. El Fassi" },
-  { id: "S3", label: "14h00 – 16h00", matiere: "Français", professeur: "M. Dubois" },
-  { id: "S4", label: "16h00 – 18h00", matiere: "Histoire-Géographie", professeur: "Mme. Alami" },
+  { id: "S1", label: "08h00 – 10h00", matiere: "Mathématiques",      professeur: "M. Benali"    },
+  { id: "S2", label: "10h00 – 12h00", matiere: "Physique-Chimie",    professeur: "Mme. El Fassi"},
+  { id: "S3", label: "14h00 – 16h00", matiere: "Français",           professeur: "M. Dubois"    },
+  { id: "S4", label: "16h00 – 18h00", matiere: "Histoire-Géographie",professeur: "Mme. Alami"   },
 ];
 
 const classes = ["2BAC-A", "2BAC-B", "1BAC-A", "1BAC-B", "TC-A", "TC-B"];
 
 const initialStudents = (): StudentAttendance[] => [
-  { id: "1", nom: "El Amrani", prenom: "Youssef", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "2", nom: "Bennis", prenom: "Fatima Zahra", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "3", nom: "Tazi", prenom: "Ahmed", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "4", nom: "Idrissi", prenom: "Salma", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "5", nom: "Benjelloun", prenom: "Omar", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "6", nom: "Alaoui", prenom: "Hiba", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "7", nom: "Fassi", prenom: "Karim", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "8", nom: "Cherkaoui", prenom: "Nadia", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "9", nom: "Belhaj", prenom: "Amine", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=64&h=64&fit=crop&crop=face", statuses: {} },
-  { id: "10", nom: "Zouiten", prenom: "Leila", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=64&h=64&fit=crop&crop=face", statuses: {} },
+  { id: "1",  nom: "El Amrani",  prenom: "Youssef",      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face", parentName: "M. El Amrani",    parentPhone: "+212661234567", statuses: {} },
+  { id: "2",  nom: "Bennis",     prenom: "Fatima Zahra", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face", parentName: "Mme. Bennis",     parentPhone: "+212662345678", statuses: {} },
+  { id: "3",  nom: "Tazi",       prenom: "Ahmed",        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop&crop=face", parentName: "M. Tazi",         parentPhone: "+212663456789", statuses: {} },
+  { id: "4",  nom: "Idrissi",    prenom: "Salma",        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face", parentName: "M. Idrissi",      parentPhone: "+212664567890", statuses: {} },
+  { id: "5",  nom: "Benjelloun", prenom: "Omar",         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face", parentName: "M. Benjelloun",   parentPhone: "+212665678901", statuses: {} },
+  { id: "6",  nom: "Alaoui",     prenom: "Hiba",         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=face", parentName: "Mme. Alaoui",     parentPhone: "+212666789012", statuses: {} },
+  { id: "7",  nom: "Fassi",      prenom: "Karim",        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=64&h=64&fit=crop&crop=face", parentName: "M. Fassi",        parentPhone: "+212667890123", statuses: {} },
+  { id: "8",  nom: "Cherkaoui",  prenom: "Nadia",        avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=64&h=64&fit=crop&crop=face", parentName: "Mme. Cherkaoui",  parentPhone: "+212668901234", statuses: {} },
+  { id: "9",  nom: "Belhaj",     prenom: "Amine",        avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=64&h=64&fit=crop&crop=face", parentName: "M. Belhaj",       parentPhone: "+212669012345", statuses: {} },
+  { id: "10", nom: "Zouiten",    prenom: "Leila",        avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=64&h=64&fit=crop&crop=face", parentName: "Mme. Zouiten",    parentPhone: "+212670123456", statuses: {} },
 ];
 
 const statusConfig = {
   present: {
     label: "Présent",
     icon: CheckCircle2,
-    active: "bg-emerald-500 text-white shadow-emerald-500/30 shadow-md",
+    active:   "bg-emerald-500 text-white shadow-emerald-500/30 shadow-md",
     inactive: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20",
   },
   late: {
     label: "Retard",
     icon: Clock,
-    active: "bg-amber-500 text-white shadow-amber-500/30 shadow-md",
+    active:   "bg-amber-500 text-white shadow-amber-500/30 shadow-md",
     inactive: "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20",
   },
   absent: {
     label: "Absent",
     icon: XCircle,
-    active: "bg-red-500 text-white shadow-red-500/30 shadow-md",
+    active:   "bg-red-500 text-white shadow-red-500/30 shadow-md",
     inactive: "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20",
   },
 } as const;
 
 export default function Presences() {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate]                   = useState<Date>(new Date());
   const [selectedClasse, setSelectedClasse] = useState("2BAC-A");
   const [activeSessionId, setActiveSessionId] = useState(sessions[0].id);
-  const [students, setStudents] = useState<StudentAttendance[]>(initialStudents());
+  const [students, setStudents]           = useState<StudentAttendance[]>(initialStudents());
+  const [notifyOpen, setNotifyOpen]       = useState(false);
 
-  const activeSession = sessions.find((s) => s.id === activeSessionId)!;
-  const sessionIndex = sessions.findIndex((s) => s.id === activeSessionId);
+  const activeSession  = sessions.find((s) => s.id === activeSessionId)!;
+  const sessionIndex   = sessions.findIndex((s) => s.id === activeSessionId);
 
   const getStatus = (student: StudentAttendance, sessionId: string): AttendanceStatus =>
     student.statuses[sessionId] ?? "unset";
 
-  const handleStatusChange = (
-    studentId: string,
-    sessionId: string,
-    newStatus: AttendanceStatus
-  ) => {
+  const handleStatusChange = (studentId: string, sessionId: string, newStatus: AttendanceStatus) => {
     setStudents((prev) =>
       prev.map((s) =>
         s.id === studentId
@@ -122,10 +122,7 @@ export default function Presences() {
 
   const handleMarkAllPresent = () => {
     setStudents((prev) =>
-      prev.map((s) => ({
-        ...s,
-        statuses: { ...s.statuses, [activeSessionId]: "present" },
-      }))
+      prev.map((s) => ({ ...s, statuses: { ...s.statuses, [activeSessionId]: "present" } }))
     );
     toast({
       title: "Présences mises à jour",
@@ -143,12 +140,23 @@ export default function Presences() {
   // Counts for the active session
   const counts = {
     present: students.filter((s) => getStatus(s, activeSessionId) === "present").length,
-    late: students.filter((s) => getStatus(s, activeSessionId) === "late").length,
-    absent: students.filter((s) => getStatus(s, activeSessionId) === "absent").length,
-    unset: students.filter((s) => getStatus(s, activeSessionId) === "unset").length,
+    late:    students.filter((s) => getStatus(s, activeSessionId) === "late").length,
+    absent:  students.filter((s) => getStatus(s, activeSessionId) === "absent").length,
+    unset:   students.filter((s) => getStatus(s, activeSessionId) === "unset").length,
   };
 
-  // Session completion badge
+  // Absent students for the active session (for WhatsApp dialog)
+  const absentStudents: AbsentStudent[] = students
+    .filter((s) => getStatus(s, activeSessionId) === "absent")
+    .map((s) => ({
+      id:          s.id,
+      prenom:      s.prenom,
+      nom:         s.nom,
+      avatar:      s.avatar,
+      parentName:  s.parentName,
+      parentPhone: s.parentPhone,
+    }));
+
   const sessionsDone = sessions.filter((sess) =>
     students.every((s) => s.statuses[sess.id] && s.statuses[sess.id] !== "unset")
   ).length;
@@ -164,7 +172,20 @@ export default function Presences() {
               Suivez les présences par session — {sessionsDone}/{sessions.length} sessions complétées
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {absentStudents.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setNotifyOpen(true)}
+                className="border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Notifier les absents
+                <Badge className="bg-red-500/15 text-red-400 border-red-500/30 border ml-1 px-1.5 py-0 text-xs">
+                  {absentStudents.length}
+                </Badge>
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={handleMarkAllPresent}
@@ -246,15 +267,13 @@ export default function Presences() {
                     "flex-1 min-w-[140px] flex flex-col items-center py-3 px-4 border-b-2 transition-all text-sm",
                     isActive
                       ? "border-primary text-primary bg-primary/5"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
                   <div className="flex items-center gap-1.5 font-medium">
                     <BookOpen className="h-3.5 w-3.5" />
                     <span>{sess.matiere}</span>
-                    {done && (
-                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                    )}
+                    {done && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
                   </div>
                   <span className="text-xs opacity-60 mt-0.5">{sess.label}</span>
                 </button>
@@ -297,7 +316,7 @@ export default function Presences() {
               return (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between px-5 py-3.5 hover:bg-white/5 transition-colors"
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/50 transition-colors"
                 >
                   {/* Student Info */}
                   <div className="flex items-center gap-3">
@@ -311,7 +330,6 @@ export default function Presences() {
                       <p className="font-medium text-sm text-foreground">
                         {student.prenom} {student.nom}
                       </p>
-                      {/* Mini session overview: dots for all sessions */}
                       <div className="flex gap-1 mt-1">
                         {sessions.map((sess) => {
                           const st = getStatus(student, sess.id);
@@ -322,9 +340,9 @@ export default function Presences() {
                               className={cn(
                                 "h-1.5 w-4 rounded-full",
                                 st === "present" ? "bg-emerald-400" :
-                                  st === "late" ? "bg-amber-400" :
-                                    st === "absent" ? "bg-red-400" :
-                                      "bg-border"
+                                st === "late"    ? "bg-amber-400"   :
+                                st === "absent"  ? "bg-red-400"     :
+                                "bg-border"
                               )}
                             />
                           );
@@ -337,14 +355,12 @@ export default function Presences() {
                   <div className="flex gap-2">
                     {(["present", "late", "absent"] as const).map((status) => {
                       const config = statusConfig[status];
-                      const Icon = config.icon;
+                      const Icon   = config.icon;
                       const isActive = current === status;
                       return (
                         <button
                           key={status}
-                          onClick={() =>
-                            handleStatusChange(student.id, activeSessionId, status)
-                          }
+                          onClick={() => handleStatusChange(student.id, activeSessionId, status)}
                           className={cn(
                             "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
                             isActive ? config.active : config.inactive
@@ -365,10 +381,10 @@ export default function Presences() {
         {/* Overall Stats */}
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Présents", value: counts.present, color: "emerald", icon: CheckCircle2 },
-            { label: "Retards", value: counts.late, color: "amber", icon: Clock },
-            { label: "Absents", value: counts.absent, color: "red", icon: XCircle },
-            { label: "Non renseignés", value: counts.unset, color: "slate", icon: Users },
+            { label: "Présents",        value: counts.present, color: "emerald", icon: CheckCircle2 },
+            { label: "Retards",         value: counts.late,    color: "amber",   icon: Clock        },
+            { label: "Absents",         value: counts.absent,  color: "red",     icon: XCircle      },
+            { label: "Non renseignés",  value: counts.unset,   color: "slate",   icon: Users        },
           ].map(({ label, value, color, icon: Icon }) => (
             <div
               key={label}
@@ -385,6 +401,16 @@ export default function Presences() {
           ))}
         </div>
       </div>
+
+      {/* WhatsApp Notify Dialog */}
+      <WhatsAppNotifyDialog
+        open={notifyOpen}
+        onOpenChange={setNotifyOpen}
+        absentStudents={absentStudents}
+        session={activeSession}
+        classe={selectedClasse}
+        date={date}
+      />
     </DashboardLayout>
   );
 }
