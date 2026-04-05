@@ -2,6 +2,7 @@ import { HashRouter, BrowserRouter, Routes, Route, useLocation, Navigate } from 
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { HeadBranding } from "@/components/branding/HeadBranding";
 import { authService } from "@/services";
 
 import Index from "@/pages/Index";
@@ -39,6 +40,7 @@ function AppContent() {
 
   return (
     <div className="flex bg-background min-h-screen font-sans">
+      <HeadBranding />
       {!isLoginPage && <UpdateBanner />}
 
       {/* Sidebar */}

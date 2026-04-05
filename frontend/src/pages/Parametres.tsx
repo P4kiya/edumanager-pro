@@ -136,6 +136,14 @@ export default function Parametres() {
         setPhone(updatedSettings.phone);
         setAddress(updatedSettings.address);
         setLogoData(updatedSettings.logoData ?? null);
+        window.dispatchEvent(
+          new CustomEvent("school-settings-updated", {
+            detail: {
+              schoolName: updatedSettings.schoolName,
+              logoData: updatedSettings.logoData ?? null,
+            },
+          })
+        );
         toast.success("Paramètres généraux mis à jour");
       } catch (error) {
         toast.error("Échec de la mise à jour des paramètres généraux");
@@ -196,6 +204,60 @@ export default function Parametres() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        toast.error("Impossible de lire le fichier image");
+        return;
+      }
+
+      setLogoData(result);
+
+      try {
+        setIsSaving(true);
+        const updatedSettings = await schoolSettingsService.update({
+          schoolName,
+          email,
+          phone,
+          address,
+          logoData: result,
+        });
+        setSchoolName(updatedSettings.schoolName);
+        setEmail(updatedSettings.email);
+        setPhone(updatedSettings.phone);
+        setAddress(updatedSettings.address);
+        setLogoData(updatedSettings.logoData ?? result);
+        window.dispatchEvent(
+          new CustomEvent("school-settings-updated", {
+            detail: {
+              schoolName: updatedSettings.schoolName,
+              logoData: updatedSettings.logoData ?? result,
+            },
+          })
+        );
+        toast.success("Logo enregistré");
+      } catch (error) {
+        toast.error("Échec de l'enregistrement du logo");
+      } finally {
+        setIsSaving(false);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Impossible de lire le fichier image");
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -644,24 +706,3 @@ export default function Parametres() {
     </DashboardLayout>
   );
 }
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Veuillez sélectionner une image valide");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        setLogoData(result);
-      }
-    };
-    reader.onerror = () => {
-      toast.error("Impossible de lire le fichier image");
-    };
-    reader.readAsDataURL(file);
-  };

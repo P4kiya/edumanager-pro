@@ -32,6 +32,7 @@ const menuItems = [
 export function AppSidebar() {
   const location = useLocation();
   const [schoolName, setSchoolName] = useState("EduManager");
+  const [schoolLogo, setSchoolLogo] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSchoolName = async () => {
@@ -40,12 +41,28 @@ export function AppSidebar() {
         if (settings.schoolName?.trim()) {
           setSchoolName(settings.schoolName.trim());
         }
+        setSchoolLogo(settings.logoData ?? null);
       } catch {
         // Keep fallback name if request fails.
       }
     };
 
+    const onSchoolSettingsUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ schoolName?: string; logoData?: string | null }>;
+      if (customEvent.detail?.schoolName?.trim()) {
+        setSchoolName(customEvent.detail.schoolName.trim());
+      }
+      if (typeof customEvent.detail?.logoData !== "undefined") {
+        setSchoolLogo(customEvent.detail.logoData ?? null);
+      }
+    };
+
     loadSchoolName();
+    window.addEventListener("school-settings-updated", onSchoolSettingsUpdated);
+
+    return () => {
+      window.removeEventListener("school-settings-updated", onSchoolSettingsUpdated);
+    };
   }, []);
 
   return (
@@ -53,9 +70,17 @@ export function AppSidebar() {
       {/* Logo Area */}
       <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 bg-primary/15 rounded-xl flex items-center justify-center border border-primary/30">
-            <BookOpen className="h-4 w-4 text-primary" />
-          </div>
+          {schoolLogo ? (
+            <img
+              src={schoolLogo}
+              alt="Logo établissement"
+              className="h-9 w-9 rounded-xl object-cover border border-primary/30"
+            />
+          ) : (
+            <div className="h-9 w-9 bg-primary/15 rounded-xl flex items-center justify-center border border-primary/30">
+              <BookOpen className="h-4 w-4 text-primary" />
+            </div>
+          )}
           <span className="text-foreground font-bold text-lg tracking-tight">{schoolName}</span>
         </div>
       </div>
