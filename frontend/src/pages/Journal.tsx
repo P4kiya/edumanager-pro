@@ -96,12 +96,14 @@ function formatDate(iso: string) {
 }
 
 function normalizeAction(action: string): ActionType {
-  const value = action.toLowerCase();
-  if (value.includes("create")) return "create";
-  if (value.includes("edit") || value.includes("update")) return "edit";
-  if (value.includes("delete") || value.includes("remove")) return "delete";
-  if (value.includes("login") || value.includes("connect")) return "login";
-  if (value.includes("logout") || value.includes("disconnect")) return "logout";
+  const value = action.trim().toUpperCase();
+
+  if (["CREATE", "CREATION", "AJOUT"].includes(value)) return "create";
+  if (["EDIT", "UPDATE", "MODIFICATION"].includes(value)) return "edit";
+  if (["DELETE", "REMOVE", "SUPPRESSION"].includes(value)) return "delete";
+  if (["LOGIN", "CONNEXION"].includes(value)) return "login";
+  if (["LOGOUT", "DECONNEXION", "DÉCONNEXION"].includes(value)) return "logout";
+
   return "view";
 }
 

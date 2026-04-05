@@ -23,7 +23,7 @@ function createWindow() {
   });
 
   if (process.env.NODE_ENV === "development") {
-    win.loadURL("http://localhost:8080");
+    win.loadURL("http://localhost:3000");
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, "dist", "index.html"));
@@ -38,7 +38,7 @@ function createWindow() {
     log.error(`Renderer process gone: ${details.reason}`);
     // Reload the app when renderer crashes
     if (process.env.NODE_ENV === "development") {
-      win.loadURL("http://localhost:8080");
+      win.loadURL("http://localhost:3000");
     } else {
       win.loadFile(path.join(__dirname, "dist", "index.html"));
     }

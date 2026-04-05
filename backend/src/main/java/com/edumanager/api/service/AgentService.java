@@ -1,6 +1,7 @@
 package com.edumanager.api.service;
 
 import com.edumanager.api.dto.request.AgentRequest;
+import com.edumanager.api.dto.request.AuditLogRequest;
 import com.edumanager.api.dto.response.AgentDTO;
 import com.edumanager.api.entity.Agent;
 import com.edumanager.api.entity.enums.AgentStatus;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class AgentService {
 
     private final AgentRepository agentRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<AgentDTO> getAllAgents() {
@@ -50,6 +52,7 @@ public class AgentService {
                 .build();
 
         Agent saved = agentRepository.save(agent);
+        createAuditLog(saved.getId(), saved.getName(), "CREATE", "Création d'un utilisateur", saved.getName());
         return mapToDTO(saved);
     }
 
@@ -73,15 +76,29 @@ public class AgentService {
         agent.setPermissions(request.getPermissions());
 
         Agent updated = agentRepository.save(agent);
+        createAuditLog(updated.getId(), updated.getName(), "UPDATE", "Modification d'un utilisateur", updated.getName());
         return mapToDTO(updated);
     }
 
     @Transactional
     public void deleteAgent(Long id) {
-        if (!agentRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Agent not found with id: " + id);
-        }
+        Agent agent = agentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found with id: " + id));
+
         agentRepository.deleteById(id);
+        createAuditLog(agent.getId(), agent.getName(), "DELETE", "Suppression d'un utilisateur", agent.getName());
+    }
+
+    private void createAuditLog(Long agentId, String agentName, String action, String description, String target) {
+        auditLogService.createLog(AuditLogRequest.builder()
+                .agentId(agentId)
+                .agentName(agentName)
+                .module("Utilisateurs")
+                .action(action)
+                .description(description)
+                .target(target)
+                .ipAddress("SYSTEM")
+                .build());
     }
 
     private AgentDTO mapToDTO(Agent agent) {

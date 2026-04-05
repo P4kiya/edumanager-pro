@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-type TabId = "general" | "notifications" | "payments";
+type TabId = "general" | "personnel" | "notifications" | "payments";
 
 interface Tab {
   id: TabId;
@@ -25,6 +25,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { id: "general", label: "Général", icon: Building2 },
+  { id: "personnel", label: "Personnel", icon: Users },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "payments", label: "Paiements", icon: CreditCard },
 ];
@@ -37,6 +38,13 @@ export default function Parametres() {
   const [address, setAddress] = useState("123 Avenue Hassan II, Casablanca, Maroc");
   const [phone, setPhone] = useState("+212 5 22 12 34 56");
   const [email, setEmail] = useState("contact@lyceemv.ma");
+  const [adminName, setAdminName] = useState("Admin Principal");
+  const [adminEmail, setAdminEmail] = useState("admin@lyceemv.ma");
+  const [adminPhone, setAdminPhone] = useState("+212 6 00 00 00 00");
+  const adminRole = "Administrateur";
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Notification settings state
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -180,6 +188,144 @@ export default function Parametres() {
                       </div>
                       <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-mono">
                         v{version}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* Personnel Tab */}
+              {activeTab === "personnel" && (
+                <div className="p-6 space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Informations administrateur
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Coordonnées du compte administrateur principal
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{adminName}</p>
+                        <p className="text-sm text-muted-foreground">{adminRole}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="adminName" className="text-muted-foreground">
+                        Nom complet
+                      </Label>
+                      <Input
+                        id="adminName"
+                        value={adminName}
+                        onChange={(e) => setAdminName(e.target.value)}
+                        className="bg-secondary/50 border-border focus:border-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminRole" className="text-muted-foreground">
+                        Rôle
+                      </Label>
+                      <Input
+                        id="adminRole"
+                        value={adminRole}
+                        readOnly
+                        disabled
+                        className="bg-secondary/50 border-border"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminEmail" className="text-muted-foreground">
+                        Email administrateur
+                      </Label>
+                      <Input
+                        id="adminEmail"
+                        type="email"
+                        value={adminEmail}
+                        onChange={(e) => setAdminEmail(e.target.value)}
+                        className="bg-secondary/50 border-border focus:border-primary"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminPhone" className="text-muted-foreground">
+                        Téléphone administrateur
+                      </Label>
+                      <Input
+                        id="adminPhone"
+                        value={adminPhone}
+                        onChange={(e) => setAdminPhone(e.target.value)}
+                        className="bg-secondary/50 border-border focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-border space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-foreground mb-2">
+                        Compte administrateur
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Mettre à jour l'email et le mot de passe du compte admin
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="adminAccountEmail" className="text-muted-foreground">
+                          Email de connexion
+                        </Label>
+                        <Input
+                          id="adminAccountEmail"
+                          type="email"
+                          value={adminEmail}
+                          onChange={(e) => setAdminEmail(e.target.value)}
+                          className="bg-secondary/50 border-border focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword" className="text-muted-foreground">
+                          Mot de passe actuel
+                        </Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="bg-secondary/50 border-border focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword" className="text-muted-foreground">
+                          Nouveau mot de passe
+                        </Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="bg-secondary/50 border-border focus:border-primary"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="confirmPassword" className="text-muted-foreground">
+                          Confirmer le nouveau mot de passe
+                        </Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="bg-secondary/50 border-border focus:border-primary"
+                        />
                       </div>
                     </div>
                   </div>
