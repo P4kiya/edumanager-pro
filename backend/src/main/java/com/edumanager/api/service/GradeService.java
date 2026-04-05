@@ -28,6 +28,12 @@ public class GradeService {
     private final StudentRepository  studentRepository;
     private final TeacherRepository  teacherRepository;
 
+    public List<GradeDTO> getAll() {
+        return gradeRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<GradeDTO> getByStudentId(Long studentId) {
         return gradeRepository.findByStudentId(studentId).stream()
                 .map(this::toDTO)

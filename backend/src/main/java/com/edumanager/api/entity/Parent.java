@@ -35,6 +35,14 @@ public class Parent {
     private String phone;
 
     private String address;
+    
+    private String avatarUrl;
+    
+    private String cin;
+    
+    private String nationality;
+    
+    private String profession;
 
     @Builder.Default
     @Column(precision = 10, scale = 2)

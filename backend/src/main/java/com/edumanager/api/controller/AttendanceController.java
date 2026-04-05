@@ -15,11 +15,16 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/attendance")
+@RequestMapping("/api/attendances")
 @RequiredArgsConstructor
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
+
+    @GetMapping
+    public ResponseEntity<List<AttendanceDTO>> getAll() {
+        return ResponseEntity.ok(attendanceService.getAll());
+    }
 
     @GetMapping("/class")
     public ResponseEntity<List<AttendanceDTO>> getByDateAndClass(

@@ -20,6 +20,7 @@ public class StudentDTO {
     private String email;
     private String phone;
     private String avatarUrl;
+    private String address;
     private LocalDate birthDate;
     private StudentStatus status;
     private String className;

@@ -29,6 +29,8 @@ public class StudentRequest {
 
     private String avatarUrl;
 
+    private String address;
+
     private LocalDate birthDate;
 
     private StudentStatus status;

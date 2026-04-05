@@ -14,11 +14,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/grades")
+@RequestMapping("/api/grades")
 @RequiredArgsConstructor
 public class GradeController {
 
     private final GradeService gradeService;
+
+    @GetMapping
+    public ResponseEntity<List<GradeDTO>> getAll() {
+        return ResponseEntity.ok(gradeService.getAll());
+    }
 
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<GradeDTO>> getByStudent(

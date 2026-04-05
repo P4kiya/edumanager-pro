@@ -27,6 +27,12 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository    studentRepository;
 
+    public List<AttendanceDTO> getAll() {
+        return attendanceRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<AttendanceDTO> getByDateAndClass(LocalDate date, String className) {
         return attendanceRepository.findByDateAndClassName(date, className).stream()
                 .map(this::toDTO)

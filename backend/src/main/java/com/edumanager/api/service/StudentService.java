@@ -88,6 +88,7 @@ public class StudentService {
         student.setEmail(req.getEmail());
         student.setPhone(req.getPhone());
         student.setAvatarUrl(req.getAvatarUrl());
+        student.setAddress(req.getAddress());
         student.setBirthDate(req.getBirthDate());
         student.setStatus(req.getStatus() != null ? req.getStatus() : StudentStatus.ACTIVE);
         student.setClassName(req.getClassName());
@@ -116,6 +117,7 @@ public class StudentService {
                 .email(s.getEmail())
                 .phone(s.getPhone())
                 .avatarUrl(s.getAvatarUrl())
+                .address(s.getAddress())
                 .birthDate(s.getBirthDate())
                 .status(s.getStatus())
                 .className(s.getClassName())

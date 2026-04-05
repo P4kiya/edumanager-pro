@@ -37,6 +37,8 @@ public class Student {
     private String avatarUrl;
 
     private LocalDate birthDate;
+    
+    private String address;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
