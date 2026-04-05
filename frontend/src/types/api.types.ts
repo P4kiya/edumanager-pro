@@ -268,6 +268,7 @@ export interface SchoolSettingsDTO {
   email: string;
   phone: string;
   address: string;
+  logoData?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -277,6 +278,7 @@ export interface SchoolSettingsRequest {
   email: string;
   phone: string;
   address: string;
+  logoData?: string | null;
 }
 
 // Paginated Response

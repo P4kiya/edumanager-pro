@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { schoolSettingsService } from "@/services";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Tableau de bord",  path: "/"                },
@@ -29,6 +31,22 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const [schoolName, setSchoolName] = useState("EduManager");
+
+  useEffect(() => {
+    const loadSchoolName = async () => {
+      try {
+        const settings = await schoolSettingsService.get();
+        if (settings.schoolName?.trim()) {
+          setSchoolName(settings.schoolName.trim());
+        }
+      } catch {
+        // Keep fallback name if request fails.
+      }
+    };
+
+    loadSchoolName();
+  }, []);
 
   return (
     <aside className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col fixed left-0 top-0 bottom-0 z-40">
@@ -38,7 +56,7 @@ export function AppSidebar() {
           <div className="h-9 w-9 bg-primary/15 rounded-xl flex items-center justify-center border border-primary/30">
             <BookOpen className="h-4 w-4 text-primary" />
           </div>
-          <span className="text-foreground font-bold text-lg tracking-tight">EduManager</span>
+          <span className="text-foreground font-bold text-lg tracking-tight">{schoolName}</span>
         </div>
       </div>
 

@@ -37,13 +37,14 @@ export default function Parametres() {
   const [activeTab, setActiveTab] = useState<TabId>("general");
 
   // General settings state
-  const [schoolName, setSchoolName] = useState("Lycée Mohammed V");
-  const [address, setAddress] = useState("123 Avenue Hassan II, Casablanca, Maroc");
-  const [phone, setPhone] = useState("+212 5 22 12 34 56");
-  const [email, setEmail] = useState("contact@lyceemv.ma");
+  const [schoolName, setSchoolName] = useState("EduManager");
+  const [address, setAddress] = useState("123 Avenue Hassan II, Marrakech, Maroc");
+  const [phone, setPhone] = useState("0766046660");
+  const [email, setEmail] = useState("contact@edumanager.ma");
+  const [logoData, setLogoData] = useState<string | null>(null);
   const [adminName, setAdminName] = useState("Admin Principal");
-  const [adminEmail, setAdminEmail] = useState("admin@lyceemv.ma");
-  const [adminPhone, setAdminPhone] = useState("+212 6 00 00 00 00");
+  const [adminEmail, setAdminEmail] = useState("admin@edumanager.ma");
+  const [adminPhone, setAdminPhone] = useState("+212 7 66 04 66 60");
   const adminRole = "Administrateur";
   const [adminId, setAdminId] = useState<number | null>(null);
   const [adminPermissions, setAdminPermissions] = useState<string[]>([]);
@@ -62,6 +63,21 @@ export default function Parametres() {
   // System info
   const [version, setVersion] = useState("Unknown");
 
+  const loadSchoolSettings = async (showErrorToast = true) => {
+    try {
+      const settings = await schoolSettingsService.get();
+      setSchoolName(settings.schoolName);
+      setEmail(settings.email);
+      setPhone(settings.phone);
+      setAddress(settings.address);
+      setLogoData(settings.logoData ?? null);
+    } catch (error) {
+      if (showErrorToast) {
+        toast.error("Impossible de charger les paramètres généraux");
+      }
+    }
+  };
+
   useEffect(() => {
     if (window.require) {
       const { ipcRenderer } = window.require("electron");
@@ -70,20 +86,14 @@ export default function Parametres() {
   }, []);
 
   useEffect(() => {
-    const loadSchoolSettings = async () => {
-      try {
-        const settings = await schoolSettingsService.get();
-        setSchoolName(settings.schoolName);
-        setEmail(settings.email);
-        setPhone(settings.phone);
-        setAddress(settings.address);
-      } catch (error) {
-        toast.error("Impossible de charger les paramètres généraux");
-      }
-    };
-
-    loadSchoolSettings();
+    loadSchoolSettings(false);
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "general") {
+      loadSchoolSettings(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const loadAdmin = async () => {
@@ -115,6 +125,7 @@ export default function Parametres() {
         email,
         phone,
         address,
+        logoData,
       };
 
       try {
@@ -124,6 +135,7 @@ export default function Parametres() {
         setEmail(updatedSettings.email);
         setPhone(updatedSettings.phone);
         setAddress(updatedSettings.address);
+        setLogoData(updatedSettings.logoData ?? null);
         toast.success("Paramètres généraux mis à jour");
       } catch (error) {
         toast.error("Échec de la mise à jour des paramètres généraux");
@@ -240,12 +252,36 @@ export default function Parametres() {
                     <Label className="text-muted-foreground">Logo de l'établissement</Label>
                     <div className="flex items-center gap-4">
                       <div className="h-20 w-20 rounded-lg border border-dashed border-border bg-secondary/50 flex items-center justify-center">
-                        <Building2 className="h-8 w-8 text-muted-foreground" />
+                        {logoData ? (
+                          <img
+                            src={logoData}
+                            alt="Logo établissement"
+                            className="h-full w-full rounded-lg object-cover"
+                          />
+                        ) : (
+                          <Building2 className="h-8 w-8 text-muted-foreground" />
+                        )}
                       </div>
-                      <Button variant="outline" className="border-border bg-secondary/50 hover:bg-secondary">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Télécharger
-                      </Button>
+                      <Label htmlFor="logo-upload">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-border bg-secondary/50 hover:bg-secondary"
+                          asChild
+                        >
+                          <span>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Télécharger
+                          </span>
+                        </Button>
+                      </Label>
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
                     </div>
                   </div>
 
@@ -608,3 +644,24 @@ export default function Parametres() {
     </DashboardLayout>
   );
 }
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        setLogoData(result);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Impossible de lire le fichier image");
+    };
+    reader.readAsDataURL(file);
+  };

@@ -31,6 +31,10 @@ public class SchoolSettings {
     @Column(nullable = false, length = 500)
     private String address;
 
+    @Lob
+    @Column(name = "logo_data", columnDefinition = "LONGTEXT")
+    private String logoData;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

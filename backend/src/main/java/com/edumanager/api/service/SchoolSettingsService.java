@@ -30,6 +30,7 @@ public class SchoolSettingsService {
         settings.setEmail(request.getEmail());
         settings.setPhone(request.getPhone());
         settings.setAddress(request.getAddress());
+        settings.setLogoData(request.getLogoData());
 
         return toDTO(schoolSettingsRepository.save(settings));
     }
@@ -40,6 +41,7 @@ public class SchoolSettingsService {
                 .email("contact@edumanager.ma")
                 .phone("0766046660")
                 .address("123 Avenue Hassan II, Marrakech, Maroc")
+                .logoData(null)
                 .build();
         return schoolSettingsRepository.save(defaults);
     }
@@ -51,6 +53,7 @@ public class SchoolSettingsService {
                 .email(settings.getEmail())
                 .phone(settings.getPhone())
                 .address(settings.getAddress())
+                .logoData(settings.getLogoData())
                 .createdAt(settings.getCreatedAt())
                 .updatedAt(settings.getUpdatedAt())
                 .build();

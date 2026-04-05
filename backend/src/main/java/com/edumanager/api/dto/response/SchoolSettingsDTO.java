@@ -17,6 +17,7 @@ public class SchoolSettingsDTO {
     private String email;
     private String phone;
     private String address;
+    private String logoData;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

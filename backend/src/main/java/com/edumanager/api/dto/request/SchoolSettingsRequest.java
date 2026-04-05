@@ -24,4 +24,6 @@ public class SchoolSettingsRequest {
 
     @NotBlank(message = "Address is required")
     private String address;
+
+    private String logoData;
 }
