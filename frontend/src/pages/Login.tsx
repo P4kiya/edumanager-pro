@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock, Eye, EyeOff, Loader2, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
-import { authService } from "@/services";
+import { authService, schoolSettingsService } from "@/services";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +13,24 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [schoolName, setSchoolName] = useState("EduManager");
+  const [schoolLogo, setSchoolLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadBranding = async () => {
+      try {
+        const settings = await schoolSettingsService.get();
+        if (settings.schoolName?.trim()) {
+          setSchoolName(settings.schoolName.trim());
+        }
+        setSchoolLogo(settings.logoData ?? null);
+      } catch {
+        // Keep fallback branding if settings are unavailable.
+      }
+    };
+
+    loadBranding();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +55,8 @@ const Login = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background">
-      {/* Abstract mesh gradient background */}
       <div className="absolute inset-0 overflow-hidden">
-        <div 
+        <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-30"
           style={{
             background: `
@@ -48,45 +65,49 @@ const Login = () => {
               radial-gradient(ellipse at 40% 80%, hsl(200 91% 50% / 0.25) 0%, transparent 50%),
               radial-gradient(ellipse at 80% 30%, hsl(250 91% 65% / 0.35) 0%, transparent 50%)
             `,
-            filter: 'blur(60px)',
+            filter: "blur(60px)",
           }}
         />
       </div>
 
-      {/* Subtle grid pattern */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `
             linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
             linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)
           `,
-          backgroundSize: '60px 60px',
+          backgroundSize: "60px 60px",
         }}
       />
 
-      {/* Glass card container */}
       <div className="relative z-10 w-full max-w-md mx-4">
         <div
           className="rounded-2xl p-8 backdrop-blur-xl border border-border/40"
           style={{
-            background: 'var(--glass-bg)',
+            background: "var(--glass-bg)",
             boxShadow: `
               0 20px 50px -10px hsl(var(--foreground) / 0.12),
               0 0 80px -20px hsl(var(--primary) / 0.15)
             `,
           }}
         >
-          {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 border border-primary/20">
-              <GraduationCap className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">EduManager</h1>
+            {schoolLogo ? (
+              <img
+                src={schoolLogo}
+                alt="Logo établissement"
+                className="w-14 h-14 rounded-xl object-cover mb-4 border border-primary/20"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4 border border-primary/20">
+                <GraduationCap className="w-8 h-8 text-primary" />
+              </div>
+            )}
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">{schoolName}</h1>
             <p className="text-muted-foreground text-sm mt-2">Connexion Administrateur</p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
@@ -126,11 +147,7 @@ const Login = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -139,9 +156,7 @@ const Login = () => {
               type="submit"
               disabled={isLoading}
               className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 mt-6"
-              style={{
-                boxShadow: '0 0 20px -5px hsl(217 91% 60% / 0.4)',
-              }}
+              style={{ boxShadow: "0 0 20px -5px hsl(217 91% 60% / 0.4)" }}
             >
               {isLoading ? (
                 <>
@@ -154,17 +169,16 @@ const Login = () => {
             </Button>
           </form>
 
-          {/* Forgot password link */}
           <div className="mt-6 text-center">
             <button
               type="button"
+              onClick={() => navigate(`/reset-password${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ""}`)}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Mot de passe oublié ?
             </button>
           </div>
 
-          {/* Invite only notice */}
           <div className="mt-8 pt-6 border-t border-border/30 text-center">
             <p className="text-xs text-muted-foreground/60">
               Système réservé aux utilisateurs autorisés uniquement.

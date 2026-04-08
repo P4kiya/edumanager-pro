@@ -98,12 +98,7 @@ export default function Parametres() {
   useEffect(() => {
     const loadAdmin = async () => {
       try {
-        const agents = await agentService.getAll();
-        if (!agents.length) {
-          return;
-        }
-
-        const selectedAdmin = agents.find((agent) => agent.status === "ACTIVE") ?? agents[0];
+        const selectedAdmin = await agentService.getAdmin();
         setAdminId(selectedAdmin.id);
         setAdminName(selectedAdmin.name);
         setAdminEmail(selectedAdmin.email);
@@ -183,6 +178,7 @@ export default function Parametres() {
       email: adminEmail,
       phone: adminPhone,
       status: adminStatus,
+      role: "ADMIN",
       permissions: adminPermissions,
       password: newPassword ? newPassword : undefined,
     };
@@ -463,18 +459,6 @@ export default function Parametres() {
                         readOnly
                         disabled
                         className="bg-secondary/50 border-border"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="adminEmail" className="text-muted-foreground">
-                        Email administrateur
-                      </Label>
-                      <Input
-                        id="adminEmail"
-                        type="email"
-                        value={adminEmail}
-                        onChange={(e) => setAdminEmail(e.target.value)}
-                        className="bg-secondary/50 border-border focus:border-primary"
                       />
                     </div>
                     <div className="space-y-2">

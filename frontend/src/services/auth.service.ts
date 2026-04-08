@@ -1,5 +1,10 @@
 import apiClient from './api-client';
-import type { LoginRequest, LoginResponse } from '@/types/api.types';
+import type {
+  ForgotPasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  ResetPasswordRequest,
+} from '@/types/api.types';
 
 const AUTH_USER_KEY = 'edumanager.auth.user';
 
@@ -7,6 +12,14 @@ export const authService = {
   login: async (payload: LoginRequest): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', payload);
     return response.data;
+  },
+
+  forgotPassword: async (payload: ForgotPasswordRequest): Promise<void> => {
+    await apiClient.post('/auth/forgot-password', payload);
+  },
+
+  resetPassword: async (payload: ResetPasswordRequest): Promise<void> => {
+    await apiClient.post('/auth/reset-password', payload);
   },
 
   logoutRemote: async (): Promise<void> => {

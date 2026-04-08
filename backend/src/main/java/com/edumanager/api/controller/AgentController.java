@@ -29,6 +29,11 @@ public class AgentController {
         return ResponseEntity.ok(agentService.getAgentById(id));
     }
 
+    @GetMapping("/admin")
+    public ResponseEntity<AgentDTO> getAdminAgent() {
+        return ResponseEntity.ok(agentService.getAdminAgent());
+    }
+
     @PostMapping
     public ResponseEntity<AgentDTO> createAgent(@Valid @RequestBody AgentRequest request) {
         AgentDTO created = agentService.createAgent(request);

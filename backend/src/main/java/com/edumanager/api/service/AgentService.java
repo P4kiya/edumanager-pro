@@ -4,11 +4,13 @@ import com.edumanager.api.dto.request.AgentRequest;
 import com.edumanager.api.dto.request.AuditLogRequest;
 import com.edumanager.api.dto.response.AgentDTO;
 import com.edumanager.api.entity.Agent;
+import com.edumanager.api.entity.enums.AgentRole;
 import com.edumanager.api.entity.enums.AgentStatus;
 import com.edumanager.api.exception.DuplicateResourceException;
 import com.edumanager.api.exception.ResourceNotFoundException;
 import com.edumanager.api.repository.AgentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +23,11 @@ public class AgentService {
 
     private final AgentRepository agentRepository;
     private final AuditLogService auditLogService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<AgentDTO> getAllAgents() {
-        return agentRepository.findAll().stream()
+        return agentRepository.findByRole(AgentRole.AGENT).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -37,6 +40,21 @@ public class AgentService {
     }
 
     @Transactional
+    public AgentDTO getAdminAgent() {
+        backfillMissingRoles();
+
+        List<Agent> admins = agentRepository.findByRole(AgentRole.ADMIN);
+        if (admins.isEmpty()) {
+            throw new ResourceNotFoundException("Aucun administrateur trouvé");
+        }
+        Agent selected = admins.stream()
+                .filter(a -> a.getStatus() == AgentStatus.ACTIVE)
+                .findFirst()
+                .orElse(admins.get(0));
+        return mapToDTO(selected);
+    }
+
+    @Transactional
     public AgentDTO createAgent(AgentRequest request) {
         if (agentRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Agent with email " + request.getEmail() + " already exists");
@@ -45,9 +63,10 @@ public class AgentService {
         Agent agent = Agent.builder()
                 .name(request.getName())
                 .email(request.getEmail())
-                .password(request.getPassword()) // TODO: Hash password with BCrypt
+                .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .status(request.getStatus() != null ? request.getStatus() : AgentStatus.ACTIVE)
+                .role(request.getRole() != null ? request.getRole() : AgentRole.AGENT)
                 .permissions(request.getPermissions())
                 .build();
 
@@ -69,10 +88,11 @@ public class AgentService {
         agent.setName(request.getName());
         agent.setEmail(request.getEmail());
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            agent.setPassword(request.getPassword()); // TODO: Hash password
+            agent.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         agent.setPhone(request.getPhone());
         agent.setStatus(request.getStatus());
+        agent.setRole(request.getRole() != null ? request.getRole() : agent.getRole());
         agent.setPermissions(request.getPermissions());
 
         Agent updated = agentRepository.save(agent);
@@ -108,8 +128,40 @@ public class AgentService {
                 .email(agent.getEmail())
                 .phone(agent.getPhone())
                 .status(agent.getStatus())
+                .role(agent.getRole())
                 .permissions(agent.getPermissions())
                 .createdAt(agent.getCreatedAt())
                 .build();
+    }
+
+    @Transactional
+    protected void backfillMissingRoles() {
+        List<Agent> allAgents = agentRepository.findAll();
+        boolean changed = false;
+
+        for (Agent agent : allAgents) {
+            if (agent.getRole() != null) {
+                continue;
+            }
+
+            agent.setRole(AgentRole.AGENT);
+            changed = true;
+        }
+
+        if (!changed) {
+            return;
+        }
+
+        agentRepository.saveAll(allAgents);
+
+        List<Agent> refreshed = agentRepository.findByRole(AgentRole.AGENT);
+        if (!refreshed.isEmpty()) {
+            Agent selectedAdmin = refreshed.stream()
+                    .filter(a -> a.getStatus() == AgentStatus.ACTIVE)
+                    .findFirst()
+                    .orElse(refreshed.get(0));
+            selectedAdmin.setRole(AgentRole.ADMIN);
+            agentRepository.save(selectedAdmin);
+        }
     }
 }

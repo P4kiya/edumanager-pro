@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { UpdateBanner } from "@/components/UpdateBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { HeadBranding } from "@/components/branding/HeadBranding";
+import { Toaster } from "@/components/ui/sonner";
 import { authService } from "@/services";
 
 import Index from "@/pages/Index";
@@ -20,37 +21,36 @@ import Notes from "@/pages/Notes";
 import Login from "@/pages/Login";
 import StudentProfile from "@/pages/StudentProfile";
 import ParentProfile from "@/pages/ParentProfile";
+import ResetPassword from "@/pages/ResetPassword";
 
-// Check if the app is running in an Electron environment
-const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+const isElectron = navigator.userAgent.toLowerCase().includes("electron");
 const Router = isElectron ? HashRouter : BrowserRouter;
 
 function AppContent() {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
+  const isPublicPage = location.pathname === "/login" || location.pathname === "/reset-password";
   const isAuthenticated = authService.isAuthenticated();
 
-  if (!isAuthenticated && !isLoginPage) {
+  if (!isAuthenticated && !isPublicPage) {
     return <Navigate to="/login" replace />;
   }
 
-  if (isAuthenticated && isLoginPage) {
+  if (isAuthenticated && isPublicPage) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <div className="flex bg-background min-h-screen font-sans">
       <HeadBranding />
-      {!isLoginPage && <UpdateBanner />}
+      {!isPublicPage && <UpdateBanner />}
 
-      {/* Sidebar */}
-      {!isLoginPage && <AppSidebar />}
+      {!isPublicPage && <AppSidebar />}
 
-      {/* Main Content Area */}
-      <main className={`flex-1 transition-all duration-300 ${isLoginPage ? "" : "ml-64"}`}>
+      <main className={`flex-1 transition-all duration-300 ${isPublicPage ? "" : "ml-64"}`}>
         <ErrorBoundary>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<Index />} />
             <Route path="/etudiants" element={<Etudiants />} />
             <Route path="/etudiants/:id" element={<StudentProfile />} />
@@ -78,6 +78,7 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AppContent />
+        <Toaster />
       </Router>
     </ErrorBoundary>
   );

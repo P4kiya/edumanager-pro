@@ -2,6 +2,7 @@
 
 export type StudentStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 export type AgentStatus = 'ACTIVE' | 'INACTIVE';
+export type AgentRole = 'ADMIN' | 'AGENT';
 export type AttendanceStatus = 'PRESENT' | 'LATE' | 'ABSENT';
 export type AttendanceSession = 'SESSION_1' | 'SESSION_2' | 'SESSION_3' | 'SESSION_4';
 export type EvaluationType = 'CONTROL' | 'DS' | 'EXAM' | 'TP' | 'ORAL';
@@ -72,6 +73,7 @@ export interface AgentDTO {
   email: string;
   phone: string;
   status: AgentStatus;
+  role: AgentRole;
   permissions: string[];
   createdAt: string;
 }
@@ -82,6 +84,7 @@ export interface AgentRequest {
   phone: string;
   password?: string;
   status: AgentStatus;
+  role?: AgentRole;
   permissions: string[];
 }
 
@@ -97,6 +100,16 @@ export interface LoginResponse {
   status: string;
   role: string;
   message: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 // Attendance DTOs

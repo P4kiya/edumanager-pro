@@ -14,6 +14,12 @@ export const agentService = {
     return response.data;
   },
 
+  // Get admin account used in settings
+  getAdmin: async (): Promise<AgentDTO> => {
+    const response = await apiClient.get<AgentDTO>('/agents/admin');
+    return response.data;
+  },
+
   // Create new agent
   create: async (agent: AgentRequest): Promise<AgentDTO> => {
     const response = await apiClient.post<AgentDTO>('/agents', agent);

@@ -41,6 +41,7 @@ const toAgentRequest = (data: Omit<Agent, "id" | "createdAt">): AgentRequest => 
   phone: data.phone || "",
   password: data.password,
   status: data.status === "active" ? "ACTIVE" : "INACTIVE",
+  role: "AGENT",
   permissions: data.permissions || [],
 });
 
@@ -127,6 +128,7 @@ export default function Agents() {
         email: agent.email,
         phone: agent.phone || "",
         status: next === "active" ? "ACTIVE" : "INACTIVE",
+        role: "AGENT",
         permissions: agent.permissions,
       };
       const updated = await agentService.update(agent.id, payload);

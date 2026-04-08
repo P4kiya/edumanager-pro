@@ -71,10 +71,11 @@ const iconColorMap = {
 
 export function TopBar() {
   const navigate = useNavigate();
+  const currentUser = authService.getUser();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [adminProfile, setAdminProfile] = useState({
-    name: "Administrateur",
-    email: "admin@edumanager.ma",
+    name: currentUser?.name || "Administrateur",
+    email: currentUser?.email || "",
   });
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
@@ -102,15 +103,13 @@ export function TopBar() {
   useEffect(() => {
     const loadAdminProfile = async () => {
       try {
-        const agents = await agentService.getAll();
-        if (!agents.length) return;
-        const admin = agents.find((agent) => agent.status === "ACTIVE") ?? agents[0];
+        const admin = await agentService.getAdmin();
         setAdminProfile({
           name: admin.name,
           email: admin.email,
         });
       } catch (error) {
-        console.error("Failed to load admin profile for header", error);
+        // Keep current session profile if admin endpoint is temporarily unavailable.
       }
     };
 

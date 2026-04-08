@@ -1,6 +1,7 @@
 package com.edumanager.api.entity;
 
 import com.edumanager.api.entity.enums.AgentStatus;
+import com.edumanager.api.entity.enums.AgentRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,6 +37,11 @@ public class Agent {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private AgentStatus status = AgentStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private AgentRole role = AgentRole.AGENT;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "agent_permissions", joinColumns = @JoinColumn(name = "agent_id"))
