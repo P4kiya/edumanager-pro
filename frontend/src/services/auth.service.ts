@@ -47,6 +47,11 @@ export const authService = {
     return authService.getUser() !== null;
   },
 
+  isAdmin: (): boolean => {
+    const user = authService.getUser();
+    return user?.role === 'ADMIN';
+  },
+
   logout: (): void => {
     sessionStorage.removeItem(AUTH_USER_KEY);
   },

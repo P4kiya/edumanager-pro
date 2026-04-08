@@ -98,7 +98,7 @@ export interface LoginResponse {
   name: string;
   email: string;
   status: string;
-  role: string;
+  role: AgentRole;
   message: string;
 }
 

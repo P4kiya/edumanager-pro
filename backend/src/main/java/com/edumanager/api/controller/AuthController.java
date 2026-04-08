@@ -66,12 +66,14 @@ public class AuthController {
                 .ipAddress("APP")
                 .build());
 
+        AgentRole effectiveRole = agent.getRole() != null ? agent.getRole() : AgentRole.AGENT;
+
         return ResponseEntity.ok(LoginResponse.builder()
                 .id(agent.getId())
                 .name(agent.getName())
                 .email(agent.getEmail())
                 .status(agent.getStatus().name())
-                .role(agent.getRole() == AgentRole.ADMIN ? "Administrateur" : "Agent")
+                .role(effectiveRole.name())
                 .message("Connexion réussie")
                 .build());
     }
