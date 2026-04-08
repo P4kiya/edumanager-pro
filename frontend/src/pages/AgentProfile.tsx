@@ -21,8 +21,8 @@ import { AgentDialog, PERMISSION_MODULES } from "@/components/agents/AgentDialog
 import type { Agent } from "@/components/agents/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { agentService } from "@/services";
-import type { AgentRequest } from "@/types/api.types";
+import { agentService, auditLogService } from "@/services";
+import type { AgentRequest, AuditLogDTO } from "@/types/api.types";
 
 const toUiAgent = (agent: {
   id: number;
@@ -41,14 +41,6 @@ const toUiAgent = (agent: {
   permissions: agent.permissions || [],
   createdAt: agent.createdAt || new Date().toISOString(),
 });
-
-const mockActivity = [
-  { date: "30/03/2025", text: "Connexion depuis 192.168.1.45" },
-  { date: "29/03/2025", text: "Modification du dossier élève #1042" },
-  { date: "28/03/2025", text: "Saisie de présences — Classe 3ème A" },
-  { date: "27/03/2025", text: "Connexion depuis 192.168.1.45" },
-  { date: "25/03/2025", text: "Exportation du bulletin T2" },
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -70,14 +62,28 @@ function avatarColor(name: string) {
   return colors[hash % colors.length];
 }
 
+function isLoginAction(action: string): boolean {
+  const value = action.trim().toUpperCase();
+  return value === "LOGIN" || value === "CONNEXION";
+}
+
+function toActivityLabel(log: AuditLogDTO): string {
+  if (log.description?.trim()) return log.description;
+  const action = (log.action || "ACTION").toUpperCase();
+  const module = log.module || "Système";
+  return `${action} — ${module}`;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AgentProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLogsLoading, setIsLogsLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [agent, setAgent] = useState<Agent | null>(null);
+  const [agentLogs, setAgentLogs] = useState<AuditLogDTO[]>([]);
   const agentId = Number(id);
 
   useEffect(() => {
@@ -102,6 +108,23 @@ export default function AgentProfile() {
 
     loadAgent();
   }, [agentId, navigate]);
+
+  useEffect(() => {
+    const loadAgentLogs = async () => {
+      if (!Number.isFinite(agentId)) return;
+      try {
+        setIsLogsLoading(true);
+        const response = await auditLogService.getByAgent(agentId);
+        setAgentLogs(response);
+      } catch {
+        setAgentLogs([]);
+      } finally {
+        setIsLogsLoading(false);
+      }
+    };
+
+    loadAgentLogs();
+  }, [agentId]);
 
   const handleSave = async (data: Omit<Agent, "id" | "createdAt">) => {
     if (!agent) return;
@@ -137,6 +160,16 @@ export default function AgentProfile() {
   }
 
   const enabledPerms = PERMISSION_MODULES.filter((m) => agent.permissions.includes(m.id));
+  const sortedLogs = [...agentLogs].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+  const lastLogin = sortedLogs.find((log) => isLoginAction(log.action || ""));
+  const now = new Date();
+  const actionsThisMonth = sortedLogs.filter((log) => {
+    const date = new Date(log.timestamp);
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  }).length;
+  const recentLogs = sortedLogs.slice(0, 5);
 
   return (
     <DashboardLayout>
@@ -256,8 +289,21 @@ export default function AgentProfile() {
                   </div>
                   <span className="text-sm text-muted-foreground">Dernière connexion</span>
                 </div>
-                <p className="text-base font-semibold text-foreground">30/03/2025</p>
-                <p className="text-xs text-muted-foreground">14:32</p>
+                {lastLogin ? (
+                  <>
+                    <p className="text-base font-semibold text-foreground">
+                      {new Date(lastLogin.timestamp).toLocaleDateString("fr-FR")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(lastLogin.timestamp).toLocaleTimeString("fr-FR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Aucune connexion enregistrée</p>
+                )}
               </div>
 
               <div className="rounded-xl border border-border bg-card/50 backdrop-blur-sm p-5">
@@ -267,7 +313,7 @@ export default function AgentProfile() {
                   </div>
                   <span className="text-sm text-muted-foreground">Actions ce mois</span>
                 </div>
-                <p className="text-3xl font-bold text-amber-500 font-mono">47</p>
+                <p className="text-3xl font-bold text-amber-500 font-mono">{actionsThisMonth}</p>
               </div>
             </div>
 
@@ -332,17 +378,29 @@ export default function AgentProfile() {
                 <Activity className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-foreground">Activité récente</h3>
               </div>
-              <div className="space-y-3">
-                {mockActivity.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                    <div>
-                      <p className="text-sm text-foreground">{item.text}</p>
-                      <p className="text-xs text-muted-foreground">{item.date}</p>
+              {isLogsLoading ? (
+                <p className="text-sm text-muted-foreground">Chargement de l'activité...</p>
+              ) : recentLogs.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune activité enregistrée</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentLogs.map((log) => (
+                    <div key={log.id} className="flex items-start gap-3">
+                      <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                      <div>
+                        <p className="text-sm text-foreground">{toActivityLabel(log)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(log.timestamp).toLocaleDateString("fr-FR")}{" "}
+                          {new Date(log.timestamp).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Danger zone */}

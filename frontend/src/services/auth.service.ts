@@ -87,6 +87,11 @@ export const authService = {
   logout: (): void => {
     sessionStorage.removeItem(AUTH_USER_KEY);
   },
+
+  getNotificationReadAtKey: (): string => {
+    const user = authService.getUser();
+    return `edumanager.notifications.readAt.${user?.id ?? "admin"}`;
+  },
 };
 
 export default authService;

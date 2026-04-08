@@ -15,47 +15,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { agentService } from "@/services";
-import { authService } from "@/services";
+import { agentService, auditLogService, authService } from "@/services";
+import type { AuditLogDTO } from "@/types/api.types";
 
 interface Notification {
   id: number;
   icon: "success" | "warning" | "info";
   title: string;
   time: string;
+  timestamp: string;
   isRead: boolean;
 }
 
-const initialNotifications: Notification[] = [
-  {
-    id: 1,
-    icon: "success",
-    title: "Nouveau paiement reçu",
-    time: "Il y a 5 min",
+function getNotificationIcon(action: string): Notification["icon"] {
+  const value = (action || "").toUpperCase();
+  if (["DELETE", "REMOVE", "SUPPRESSION"].includes(value)) return "warning";
+  if (["LOGIN", "LOGOUT", "VIEW", "CONSULTATION"].includes(value)) return "info";
+  return "success";
+}
+
+function formatRelativeTime(isoTimestamp: string): string {
+  const now = new Date().getTime();
+  const then = new Date(isoTimestamp).getTime();
+  const diffMinutes = Math.max(0, Math.floor((now - then) / 60000));
+  if (diffMinutes < 1) return "À l'instant";
+  if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Hier";
+  return `Il y a ${diffDays} jours`;
+}
+
+function toNotification(log: AuditLogDTO): Notification {
+  return {
+    id: log.id,
+    icon: getNotificationIcon(log.action || ""),
+    title: log.description?.trim() || `${(log.action || "ACTION").toUpperCase()} — ${log.module || "Système"}`,
+    time: formatRelativeTime(log.timestamp),
+    timestamp: log.timestamp,
     isRead: false,
-  },
-  {
-    id: 2,
-    icon: "info",
-    title: "Nouvelle inscription : Sarah Connor",
-    time: "Il y a 2h",
-    isRead: false,
-  },
-  {
-    id: 3,
-    icon: "warning",
-    title: "Maintenance du serveur prévue",
-    time: "Hier",
-    isRead: true,
-  },
-  {
-    id: 4,
-    icon: "info",
-    title: "Rapport mensuel disponible",
-    time: "Il y a 3 jours",
-    isRead: true,
-  },
-];
+  };
+}
 
 const iconMap = {
   success: CheckCircle,
@@ -74,7 +75,7 @@ export function TopBar() {
   const currentUser = authService.getUser();
   const isAdmin = currentUser?.role === "ADMIN";
   const roleLabel = isAdmin ? "Administrateur" : "Agent";
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [adminProfile, setAdminProfile] = useState({
     name: currentUser?.name || "Administrateur",
     email: currentUser?.email || "",
@@ -122,6 +123,31 @@ export function TopBar() {
     loadAdminProfile();
   }, [isAdmin]);
 
+  useEffect(() => {
+    const loadNotifications = async () => {
+      if (!isAdmin) {
+        setNotifications([]);
+        return;
+      }
+
+      try {
+        const logs = await auditLogService.getAll();
+        const readAtRaw = localStorage.getItem(authService.getNotificationReadAtKey());
+        const readAt = readAtRaw ? Date.parse(readAtRaw) : NaN;
+        const notificationsFromLogs = logs.slice(0, 8).map(toNotification).map((notification) => {
+          const notificationTime = Date.parse(notification.timestamp);
+          const isRead = !Number.isNaN(readAt) && !Number.isNaN(notificationTime) && notificationTime <= readAt;
+          return { ...notification, isRead };
+        });
+        setNotifications(notificationsFromLogs);
+      } catch {
+        setNotifications([]);
+      }
+    };
+
+    loadNotifications();
+  }, [isAdmin, currentUser?.id]);
+
   const adminInitials = adminProfile.name
     .split(" ")
     .filter(Boolean)
@@ -130,6 +156,7 @@ export function TopBar() {
     .join("") || "AD";
 
   const markAllAsRead = () => {
+    localStorage.setItem(authService.getNotificationReadAtKey(), new Date().toISOString());
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
 
@@ -235,7 +262,11 @@ export function TopBar() {
 
                 {/* Footer */}
                 <div className="border-t border-border/50 px-4 py-2.5">
-                  <button className="w-full text-center text-xs text-primary hover:text-primary/80 transition-colors font-medium">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/journal")}
+                    className="w-full text-center text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
                     Voir toutes les notifications
                   </button>
                 </div>

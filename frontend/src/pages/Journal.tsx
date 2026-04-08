@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { auditLogService } from "@/services";
+import { auditLogService, authService } from "@/services";
 import type { AuditLogDTO } from "@/types/api.types";
 
 type ActionType = "create" | "edit" | "delete" | "view" | "login" | "logout";
@@ -128,6 +128,11 @@ export default function Journal() {
   const [filterAction, setFilterAction] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
   const [filterAgent, setFilterAgent] = useState<string>("all");
+
+  useEffect(() => {
+    if (!authService.isAdmin()) return;
+    localStorage.setItem(authService.getNotificationReadAtKey(), new Date().toISOString());
+  }, []);
 
   const loadLogs = useCallback(async (silent = false) => {
     try {
