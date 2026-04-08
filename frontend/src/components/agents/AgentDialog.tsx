@@ -25,7 +25,6 @@ export const PERMISSION_MODULES = [
   { id: "finances",        label: "Finances",            description: "Gestion des tarifs et paiements" },
   { id: "emploi_du_temps", label: "Emploi du temps",     description: "Création et modification des plannings" },
   { id: "professeurs",     label: "Professeurs",         description: "Gestion des fiches professeurs" },
-  { id: "parametres",      label: "Paramètres",          description: "Configuration du système" },
 ];
 
 interface AgentDialogProps {

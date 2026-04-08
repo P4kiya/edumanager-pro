@@ -99,6 +99,7 @@ export interface LoginResponse {
   email: string;
   status: string;
   role: AgentRole;
+  permissions: string[];
   message: string;
 }
 

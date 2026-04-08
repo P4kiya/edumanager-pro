@@ -52,6 +52,38 @@ export const authService = {
     return user?.role === 'ADMIN';
   },
 
+  hasPermission: (permission: string): boolean => {
+    const user = authService.getUser();
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    return (user.permissions || []).includes(permission);
+  },
+
+  getDefaultRoute: (): string => {
+    const user = authService.getUser();
+    if (!user) return '/login';
+    if (user.role === 'ADMIN') return '/';
+
+    const permissionRouteMap: Record<string, string> = {
+      students: '/etudiants',
+      parents: '/parents',
+      presences: '/presences',
+      notes: '/notes',
+      finances: '/finances',
+      emploi_du_temps: '/emploi-du-temps',
+      professeurs: '/professeurs',
+    };
+
+    for (const permission of user.permissions || []) {
+      const route = permissionRouteMap[permission];
+      if (route) {
+        return route;
+      }
+    }
+
+    return '/etudiants';
+  },
+
   logout: (): void => {
     sessionStorage.removeItem(AUTH_USER_KEY);
   },

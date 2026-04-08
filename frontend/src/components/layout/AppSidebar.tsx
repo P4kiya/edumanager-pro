@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { schoolSettingsService } from "@/services";
+import { authService, schoolSettingsService } from "@/services";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Tableau de bord",  path: "/"                },
@@ -33,6 +33,20 @@ export function AppSidebar() {
   const location = useLocation();
   const [schoolName, setSchoolName] = useState("EduManager");
   const [schoolLogo, setSchoolLogo] = useState<string | null>(null);
+  const agentMenuPermissionMap: Record<string, string> = {
+    "/finances": "finances",
+    "/etudiants": "students",
+    "/presences": "presences",
+    "/notes": "notes",
+    "/emploi-du-temps": "emploi_du_temps",
+    "/professeurs": "professeurs",
+    "/parents": "parents",
+  };
+  const visibleMenuItems = authService.isAdmin()
+    ? menuItems
+    : menuItems.filter((item) =>
+        !!agentMenuPermissionMap[item.path] && authService.hasPermission(agentMenuPermissionMap[item.path])
+      );
 
   useEffect(() => {
     const loadSchoolName = async () => {
@@ -87,7 +101,7 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto scrollbar-thin">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link

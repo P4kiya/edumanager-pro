@@ -72,6 +72,8 @@ const iconColorMap = {
 export function TopBar() {
   const navigate = useNavigate();
   const currentUser = authService.getUser();
+  const isAdmin = currentUser?.role === "ADMIN";
+  const roleLabel = isAdmin ? "Administrateur" : "Agent";
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [adminProfile, setAdminProfile] = useState({
     name: currentUser?.name || "Administrateur",
@@ -102,6 +104,10 @@ export function TopBar() {
 
   useEffect(() => {
     const loadAdminProfile = async () => {
+      if (!isAdmin) {
+        return;
+      }
+
       try {
         const admin = await agentService.getAdmin();
         setAdminProfile({
@@ -114,7 +120,7 @@ export function TopBar() {
     };
 
     loadAdminProfile();
-  }, []);
+  }, [isAdmin]);
 
   const adminInitials = adminProfile.name
     .split(" ")
@@ -245,7 +251,7 @@ export function TopBar() {
                 </Avatar>
                 <div className="hidden sm:block text-left">
                   <p className="text-sm font-medium text-foreground">{adminProfile.name}</p>
-                  <p className="text-xs text-muted-foreground">Administrateur</p>
+                  <p className="text-xs text-muted-foreground">{roleLabel}</p>
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -261,20 +267,22 @@ export function TopBar() {
                   <p className="text-xs text-muted-foreground truncate">{adminProfile.email}</p>
                   <div className="flex items-center gap-1 mt-0.5">
                     <ShieldCheck className="h-3 w-3 text-primary" />
-                    <span className="text-xs text-primary font-medium">Administrateur</span>
+                    <span className="text-xs text-primary font-medium">{roleLabel}</span>
                   </div>
                 </div>
               </div>
 
               {/* Menu items */}
               <div className="py-1">
-                <DropdownMenuItem
-                  className="cursor-pointer gap-2.5 px-4 py-2.5 text-sm"
-                  onClick={() => navigate("/parametres")}
-                >
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                  Paramètres
-                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2.5 px-4 py-2.5 text-sm"
+                    onClick={() => navigate("/parametres")}
+                  >
+                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    Paramètres
+                  </DropdownMenuItem>
+                )}
               </div>
 
               <Separator className="bg-border/50" />
