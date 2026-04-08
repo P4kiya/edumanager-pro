@@ -21,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -67,6 +69,7 @@ public class AuthController {
                 .build());
 
         AgentRole effectiveRole = agent.getRole() != null ? agent.getRole() : AgentRole.AGENT;
+        List<String> effectivePermissions = agent.getPermissions() != null ? agent.getPermissions() : List.of();
 
         return ResponseEntity.ok(LoginResponse.builder()
                 .id(agent.getId())
@@ -74,6 +77,7 @@ public class AuthController {
                 .email(agent.getEmail())
                 .status(agent.getStatus().name())
                 .role(effectiveRole.name())
+                .permissions(effectivePermissions)
                 .message("Connexion réussie")
                 .build());
     }
