@@ -162,84 +162,86 @@ export function TopBar() {
           </button>
 
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary/50 transition-colors hover:bg-secondary">
-                <Bell className="h-5 w-5 text-muted-foreground" />
-                {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              sideOffset={8}
-              className="w-[350px] border-border bg-popover p-0 shadow-xl shadow-black/20 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
-                <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Tout marquer comme lu
+          {isAdmin && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary/50 transition-colors hover:bg-secondary">
+                  <Bell className="h-5 w-5 text-muted-foreground" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-destructive-foreground">
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
-              </div>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                sideOffset={8}
+                className="w-[350px] border-border bg-popover p-0 shadow-xl shadow-black/20 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
+                  <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Tout marquer comme lu
+                  </button>
+                </div>
 
-              {/* Notification List */}
-              <div className="max-h-[320px] overflow-y-auto">
-                {notifications.map((notification) => {
-                  const IconComponent = iconMap[notification.icon];
-                  return (
-                    <div
-                      key={notification.id}
-                      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer ${
-                        notification.isRead ? "opacity-60" : ""
-                      }`}
-                    >
-                      {/* Icon */}
-                      <div className="mt-0.5">
-                        <IconComponent
-                          className={`h-4 w-4 ${iconColorMap[notification.icon]}`}
-                        />
+                {/* Notification List */}
+                <div className="max-h-[320px] overflow-y-auto">
+                  {notifications.map((notification) => {
+                    const IconComponent = iconMap[notification.icon];
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer ${
+                          notification.isRead ? "opacity-60" : ""
+                        }`}
+                      >
+                        {/* Icon */}
+                        <div className="mt-0.5">
+                          <IconComponent
+                            className={`h-4 w-4 ${iconColorMap[notification.icon]}`}
+                          />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm ${
+                              notification.isRead
+                                ? "text-muted-foreground"
+                                : "text-foreground font-medium"
+                            }`}
+                          >
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {notification.time}
+                          </p>
+                        </div>
+
+                        {/* Unread indicator */}
+                        {!notification.isRead && (
+                          <CircleDot className="h-2.5 w-2.5 text-primary mt-1.5 fill-primary" />
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm ${
-                            notification.isRead
-                              ? "text-muted-foreground"
-                              : "text-foreground font-medium"
-                          }`}
-                        >
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {notification.time}
-                        </p>
-                      </div>
-
-                      {/* Unread indicator */}
-                      {!notification.isRead && (
-                        <CircleDot className="h-2.5 w-2.5 text-primary mt-1.5 fill-primary" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer */}
-              <div className="border-t border-border/50 px-4 py-2.5">
-                <button className="w-full text-center text-xs text-primary hover:text-primary/80 transition-colors font-medium">
-                  Voir toutes les notifications
-                </button>
-              </div>
-            </PopoverContent>
-          </Popover>
+                {/* Footer */}
+                <div className="border-t border-border/50 px-4 py-2.5">
+                  <button className="w-full text-center text-xs text-primary hover:text-primary/80 transition-colors font-medium">
+                    Voir toutes les notifications
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
 
           {/* User dropdown */}
           <DropdownMenu>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
   ClipboardList,
   Users,
   Zap,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -122,29 +123,45 @@ const toAuditEntry = (log: AuditLogDTO): AuditEntry => ({
 export default function Journal() {
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [filterAction, setFilterAction] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
   const [filterAgent, setFilterAgent] = useState<string>("all");
 
-  useEffect(() => {
-    const loadLogs = async () => {
-      try {
+  const loadLogs = useCallback(async (silent = false) => {
+    try {
+      if (silent) {
+        setIsRefreshing(true);
+      } else {
         setIsLoading(true);
-        const response = await auditLogService.getAll();
-        setLogs(response.map(toAuditEntry));
-      } catch (error) {
+      }
+      const response = await auditLogService.getAll();
+      setLogs(response.map(toAuditEntry));
+    } catch (error) {
+      if (!silent) {
         toast({
           title: "Erreur",
           description: "Impossible de charger le journal d'activité.",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
-    };
-    loadLogs();
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      loadLogs(true);
+    }, 10000);
+    return () => window.clearInterval(interval);
+  }, [loadLogs]);
 
   const allModules = [...new Set(logs.map((l) => l.module))].sort();
   const allAgents = [...new Set(logs.map((l) => l.agentName))].sort();
@@ -303,6 +320,16 @@ export default function Journal() {
           <span className="ml-auto text-sm text-muted-foreground">
             {filtered.length} entrée{filtered.length !== 1 ? "s" : ""}
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadLogs(true)}
+            disabled={isRefreshing}
+            className="gap-1.5 border-border bg-secondary/50"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+            Actualiser
+          </Button>
         </div>
 
         {isLoading ? (

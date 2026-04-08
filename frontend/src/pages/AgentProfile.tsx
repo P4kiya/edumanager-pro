@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -21,37 +21,26 @@ import { AgentDialog, PERMISSION_MODULES } from "@/components/agents/AgentDialog
 import type { Agent } from "@/components/agents/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { agentService } from "@/services";
+import type { AgentRequest } from "@/types/api.types";
 
-// ── Shared mock data (must stay in sync with Agents.tsx until a real store exists) ──
-const mockAgents: Agent[] = [
-  {
-    id: 1,
-    name: "Sarah El Mansouri",
-    email: "sarah.elmansouri@edumanager.ma",
-    phone: "+212 661 234 567",
-    status: "active",
-    permissions: ["students", "presences", "notes", "parents"],
-    createdAt: "2024-09-01",
-  },
-  {
-    id: 2,
-    name: "Karim Benali",
-    email: "karim.benali@edumanager.ma",
-    phone: "+212 662 345 678",
-    status: "active",
-    permissions: ["students", "parents", "presences", "emploi_du_temps"],
-    createdAt: "2024-09-15",
-  },
-  {
-    id: 3,
-    name: "Amina Tazi",
-    email: "amina.tazi@edumanager.ma",
-    phone: "+212 663 456 789",
-    status: "inactive",
-    permissions: ["finances"],
-    createdAt: "2024-10-01",
-  },
-];
+const toUiAgent = (agent: {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: "ACTIVE" | "INACTIVE";
+  permissions: string[];
+  createdAt: string;
+}): Agent => ({
+  id: agent.id,
+  name: agent.name,
+  email: agent.email,
+  phone: agent.phone || "",
+  status: agent.status === "ACTIVE" ? "active" : "inactive",
+  permissions: agent.permissions || [],
+  createdAt: agent.createdAt || new Date().toISOString(),
+});
 
 const mockActivity = [
   { date: "30/03/2025", text: "Connexion depuis 192.168.1.45" },
@@ -86,20 +75,68 @@ function avatarColor(name: string) {
 export default function AgentProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const [agent, setAgent] = useState<Agent>(
-    () => mockAgents.find((a) => a.id === Number(id)) ?? mockAgents[0]
-  );
+  const [isLoading, setIsLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const agentId = Number(id);
 
-  const handleSave = (data: Omit<Agent, "id" | "createdAt">) => {
-    setAgent((prev) => ({ ...prev, ...data }));
-    toast.success("Agent modifié avec succès");
+  useEffect(() => {
+    const loadAgent = async () => {
+      if (!Number.isFinite(agentId)) {
+        toast.error("Identifiant utilisateur invalide");
+        navigate("/agents");
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await agentService.getById(agentId);
+        setAgent(toUiAgent(response));
+      } catch {
+        toast.error("Impossible de charger le profil utilisateur");
+        navigate("/agents");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAgent();
+  }, [agentId, navigate]);
+
+  const handleSave = async (data: Omit<Agent, "id" | "createdAt">) => {
+    if (!agent) return;
+    try {
+      const payload: AgentRequest = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || "",
+        status: data.status === "active" ? "ACTIVE" : "INACTIVE",
+        role: "AGENT",
+        permissions: data.permissions || [],
+        password: data.password || undefined,
+      };
+
+      const updated = await agentService.update(agent.id, payload);
+      setAgent(toUiAgent(updated));
+      toast.success("Agent modifié avec succès");
+    } catch {
+      toast.error("Impossible de modifier l'utilisateur");
+    }
   };
 
-  const enabledPerms = PERMISSION_MODULES.filter((m) =>
-    agent.permissions.includes(m.id)
-  );
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="text-sm text-muted-foreground">Chargement du profil utilisateur...</div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!agent) {
+    return null;
+  }
+
+  const enabledPerms = PERMISSION_MODULES.filter((m) => agent.permissions.includes(m.id));
 
   return (
     <DashboardLayout>
