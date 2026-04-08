@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(mvn compile:*)",
-      "Bash(./mvnw compile:*)"
+      "Bash(./mvnw compile:*)",
+      "Bash(python -c \"import docx; print\\('python-docx available'\\)\")"
     ]
   }
 }
